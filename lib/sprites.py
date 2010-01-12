@@ -34,32 +34,27 @@ class StringBaseSprite(pygame.sprite.Sprite):
 #########################################################################################
 
 
-class BackgroundPlaying(pygame.sprite.Sprite):
+class BackgroundPlaying():
     """Background follows player's move"""
 
     mag = 0.3
 
     def __init__(self):
-        pygame.sprite.Sprite.__init__(self, self.containers)
 
         magged_size = (int(SCR_RECT.width*(1+self.mag)), int(SCR_RECT.height*(1+self.mag)))
-        #self.image = pygame.transform.chop(self.image, Rect(0, SCR_RECT.bottom, SCR_RECT.width, SCR_RECT.height-self.image.get_height()))
-        print 'test'
-        self.image = pygame.transform.scale(self.image, (magged_size[0], int(magged_size[1]*(1024.0/770))))
+        self.image = pygame.transform.scale(self.image, (magged_size[0], int(magged_size[1]*(1024.0/770))))  #FIXME
 
-        self.x = -magged_size[0]*(self.mag/(1+self.mag))/2.0
-        self.y = -magged_size[1]*(self.mag/(1+self.mag))/2.0
+        self.startx = -magged_size[0]*(self.mag/(1+self.mag))/2.0
+        self.starty = -magged_size[1]*(self.mag/(1+self.mag))/2.0
 
-        self.rect = self.image.get_rect()
-        self.rect.x = int(self.x)
-        self.rect.y = int(self.y)
-
-    def update(self):
+    def draw(self, screen):
         pos = Data.player_pos
         start = SCR_RECT.center
 
-        self.rect.x = self.x + (start[0] - pos[0])*self.mag
-        self.rect.y = self.y + (start[1] - pos[1])*self.mag
+        x = self.startx + (start[0] - pos[0])*self.mag
+        y = self.starty + (start[1] - pos[1])*self.mag
+
+        screen.blit(self.image, (x, y))
 
 
 class Player(pygame.sprite.Sprite):

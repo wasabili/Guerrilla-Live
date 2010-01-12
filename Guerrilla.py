@@ -52,7 +52,6 @@ class Guerrilla(object):
         self.start_all = pygame.sprite.Group()          # Opening Screen
         self.pre_gameover_all = pygame.sprite.Group()   # GameOver Backgrounds
         self.gameover_all = pygame.sprite.Group()       # GameOver screen
-        self.pre_play_all = pygame.sprite.Group()       # Play backgrounds
         self.play_all = pygame.sprite.Group()           # Play screen
         self.ecolis = pygame.sprite.Group()             # E.Coli Group
         self.shots = pygame.sprite.Group()              # Beam Group
@@ -73,11 +72,10 @@ class Guerrilla(object):
         Shot.containers = self.overall, self.play_all, self.shots
         Explosion.containers = self.overall, self.play_all
         HeartMark.containers = self.overall, self.play_all
-        BackgroundPlaying.containers = self.overall, self.pre_play_all
 
         # Playing Animation
         self.player = Player()  # own ship
-        BackgroundPlaying()
+        self.bg_playing = BackgroundPlaying()  #FIXME
 
         # Opening Animation
         self.start_animations = [] #FIXME
@@ -108,7 +106,6 @@ class Guerrilla(object):
         if self.game_state == START:
             self.start_all.update()
         elif self.game_state == PLAY:
-            self.pre_play_all.update()
             self.play_all.update()
             self.gen_daichokin_randomly()
             self.collision_detection()  # detect collision between E.Coli and shots
@@ -126,7 +123,7 @@ class Guerrilla(object):
 
         elif self.game_state == PLAY:       # playing
             screen.fill((0,0,0))
-            #self.pre_play_all.draw(screen)             # Background
+            self.bg_playing.draw(screen)               # Background FIXME
             self.play_all.draw(screen)
 
         elif self.game_state == GAMEOVER:   # game over
