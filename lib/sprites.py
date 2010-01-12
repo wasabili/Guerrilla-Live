@@ -64,7 +64,7 @@ class Player(pygame.sprite.Sprite):
     speed = 2
     accel = 0.15
     dynamic_fc = 0.05
-    max_speed = 2.5
+    max_speed = 4
     # When the object is static, its friction coefficient is supposed to be 0
 
     reload_time = 5
@@ -81,7 +81,7 @@ class Player(pygame.sprite.Sprite):
         self.rect = Rect(0, 0, self.rect.width*1/4, self.rect.height*1/4)  #FIXME TEST
         self.rect.center = CENTER
 
-        self.hearts = [HeartMark((30+60*x, SCR_RECT.height-30)) for x in range(self.lives)]
+        self.hearts = [HeartMark((60+120*x, SCR_RECT.height-60)) for x in range(self.lives)]
 
         self.fpx = float(self.rect.x)
         self.fpy = float(self.rect.y)
@@ -134,6 +134,26 @@ class Player(pygame.sprite.Sprite):
             if pressed_keys[K_DOWN] or pressed_keys[K_s]:
                 self.fpvy += self.accel
 
+            # Calculate friction
+            if self.fpvx > 0:
+                self.fpvx -= self.dynamic_fc
+            elif self.fpvx < 0:
+                self.fpvx += self.dynamic_fc
+            if self.fpvy > 0:
+                self.fpvy -= self.dynamic_fc
+            elif self.fpvy < 0:
+                self.fpvy += self.dynamic_fc
+
+            # Restrict player speed by max_speed
+            if self.fpvx > self.max_speed:
+                self.fpvx = self.max_speed
+            elif self.fpvx < -self.max_speed:
+                self.fpvx = -self.max_speed
+            if self.fpvy > self.max_speed:
+                self.fpvy = self.max_speed
+            elif self.fpvy < -self.max_speed:
+                self.fpvy = -self.max_speed
+
             # Restrict player position inside SCR_RECT
             if SCR_RECT.right <= self.rect.right and self.fpvx > 0:
                 self.fpvx = 0
@@ -143,20 +163,6 @@ class Player(pygame.sprite.Sprite):
                 self.fpvy = 0
             if SCR_RECT.bottom <= self.rect.bottom and self.fpvy > 0:
                 self.fpvy = 0
-
-            if self.fpvx > self.max_speed:
-                self.fpvx = self.max_speed
-            if self.fpvy > self.max_speed:
-                self.fpvy = self.max_speed
-
-            if self.fpvx > 0:
-                self.fpvx -= self.dynamic_fc
-            elif self.fpvx < 0:
-                self.fpvx += self.dynamic_fc
-            if self.fpvy > 0:
-                self.fpvy -= self.dynamic_fc
-            elif self.fpvy < 0:
-                self.fpvy += self.dynamic_fc
 
         else:
             # Move player

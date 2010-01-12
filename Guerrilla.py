@@ -221,7 +221,7 @@ class Guerrilla(object):
         Shot.image = load_image("shot.png")
         EColi.images = load_image("ecolis.png", 3)
         Explosion.images = load_image("explosion.png", 16)
-        HeartMark.images = load_image("heart_anime.png", 96)
+        HeartMark.images = load_image("heart-animation.png", 96)
 
         # Load background
         self.backgrounds = load_image("backgrounds.jpg", 3)
