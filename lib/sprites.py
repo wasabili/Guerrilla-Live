@@ -37,7 +37,7 @@ class StringBaseSprite(pygame.sprite.Sprite):
 class BackgroundPlaying():
     """Background follows player's move"""
 
-    mag = 0.3
+    mag = 0.1
 
     def __init__(self):
 
@@ -60,14 +60,20 @@ class BackgroundPlaying():
 class Player(pygame.sprite.Sprite):
     """Own ship"""
 
-    accel = 0.05
-    reload_time = 5
-    lives = 3
+    enable_acceleration = True 
+    speed = 2
+    accel = 0.15
+    dynamic_fc = 0.05
+    max_speed = 2.5
+    # When the object is static, its friction coefficient is supposed to be 0
 
+    reload_time = 5
+    frame = 0L
+
+    lives = 3
     hearts = []
     invincible = -1
     blink_interval = 10
-    frame = 0L
 
     def __init__(self):
         pygame.sprite.Sprite.__init__(self, self.containers)
@@ -116,26 +122,58 @@ class Player(pygame.sprite.Sprite):
             self.invincible -= 1
             self.image = self.original_image
 
-        # Accel player
-        pressed_keys = pygame.key.get_pressed()
-        if pressed_keys[K_LEFT] or pressed_keys[K_a]:
-            self.fpvx -= self.accel
-        if pressed_keys[K_RIGHT] or pressed_keys[K_d]:
-            self.fpvx += self.accel
-        if pressed_keys[K_UP] or pressed_keys[K_w]:
-            self.fpvy -= self.accel
-        if pressed_keys[K_DOWN] or pressed_keys[K_s]:
-            self.fpvy += self.accel
+        if self.enable_acceleration:
+            # Accel player
+            pressed_keys = pygame.key.get_pressed()
+            if pressed_keys[K_LEFT] or pressed_keys[K_a]:
+                self.fpvx -= self.accel
+            if pressed_keys[K_RIGHT] or pressed_keys[K_d]:
+                self.fpvx += self.accel
+            if pressed_keys[K_UP] or pressed_keys[K_w]:
+                self.fpvy -= self.accel
+            if pressed_keys[K_DOWN] or pressed_keys[K_s]:
+                self.fpvy += self.accel
 
-        # Restrict player position inside SCR_RECT
-        if SCR_RECT.right <= self.rect.right and self.fpvx > 0:
-            self.fpvx = 0
-        if SCR_RECT.left >= self.rect.left and self.fpvx < 0:
-            self.fpvx = 0
-        if SCR_RECT.top >= self.rect.top and self.fpvy < 0:
-            self.fpvy = 0
-        if SCR_RECT.bottom <= self.rect.bottom and self.fpvy > 0:
-            self.fpvy = 0
+            # Restrict player position inside SCR_RECT
+            if SCR_RECT.right <= self.rect.right and self.fpvx > 0:
+                self.fpvx = 0
+            if SCR_RECT.left >= self.rect.left and self.fpvx < 0:
+                self.fpvx = 0
+            if SCR_RECT.top >= self.rect.top and self.fpvy < 0:
+                self.fpvy = 0
+            if SCR_RECT.bottom <= self.rect.bottom and self.fpvy > 0:
+                self.fpvy = 0
+
+            if self.fpvx > self.max_speed:
+                self.fpvx = self.max_speed
+            if self.fpvy > self.max_speed:
+                self.fpvy = self.max_speed
+
+            if self.fpvx > 0:
+                self.fpvx -= self.dynamic_fc
+            elif self.fpvx < 0:
+                self.fpvx += self.dynamic_fc
+            if self.fpvy > 0:
+                self.fpvy -= self.dynamic_fc
+            elif self.fpvy < 0:
+                self.fpvy += self.dynamic_fc
+
+        else:
+            # Move player
+            self.fpvx, self.fpvy = 0, 0
+
+            pressed_keys = pygame.key.get_pressed()
+            if pressed_keys[K_LEFT] or pressed_keys[K_a]:
+                self.fpvx = -self.speed
+            if pressed_keys[K_RIGHT] or pressed_keys[K_d]:
+                self.fpvx = self.speed
+            if pressed_keys[K_UP] or pressed_keys[K_w]:
+                self.fpvy = -self.speed
+            if pressed_keys[K_DOWN] or pressed_keys[K_s]:
+                self.fpvy = self.speed
+
+            # Restrict player position inside SCR_RECT
+            self.rect.clamp_ip(SCR_RECT)  
 
         self.fpx += self.fpvx
         self.fpy += self.fpvy
