@@ -4,6 +4,7 @@
 import pygame
 from pygame.locals import *
 import os
+import sys
 import Numeric
 
 def load_image(filename, sprit=None, colorkey=None):
@@ -14,11 +15,10 @@ def load_image(filename, sprit=None, colorkey=None):
     except pygame.error, message:
         print "Cannot load image:", filename
         raise SystemExit, message
-    image = image.convert_alpha()
-    if colorkey is not None:
-        if colorkey is -1:
-            colorkey = image.get_at((0,0))
-        image.set_colorkey(colorkey, RLEACCEL)
+    if colorkey is None:
+        colorkey = image.get_at((0,0))
+    image.set_colorkey(colorkey, RLEACCEL)
+    image.convert_alpha()
     if sprit is not None:
         return _split_image(image, sprit)
     return image
@@ -34,7 +34,7 @@ def _split_image(image, n):
         surface = pygame.Surface((w1,h))
         surface.blit(image, (0,0), (i,0,w1,h))
         surface.set_colorkey(surface.get_at((0,0)), RLEACCEL)
-        surface.convert()
+        surface.convert_alpha()
         image_list.append(surface)
     return image_list
 
@@ -52,14 +52,15 @@ def set_transparency_to_surf(image, transparency):
     del pixels_alpha
 
 
-def init_data():
-    Data.score = 0
-    Data.player_pos = (0, 0)
-
-class Data(object):
+class GameData(object):
     """Manage data while playing"""
 
+    killed = 0
+    bosslimit = sys.maxint
     score = 0
-    player_pos = (0, 0)
+
+    def __init__(self, level): # FIXME imp level
+        self.killed = 0
+        self.bosslimit = 300
 
 

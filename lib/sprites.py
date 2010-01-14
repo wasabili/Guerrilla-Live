@@ -6,8 +6,10 @@ from pygame.locals import *
 import math
 
 from constants import *
-from utils     import Data, set_transparency_to_surf
+from utils     import set_transparency_to_surf
 
+
+player_pos = (0, 0)
 
 class StringBaseSprite(pygame.sprite.Sprite):
 
@@ -48,7 +50,7 @@ class BackgroundPlaying():
         self.starty = -magged_size[1]*(self.mag/(1+self.mag))/2.0
 
     def draw(self, screen):
-        pos = Data.player_pos
+        pos = player_pos
         start = SCR_RECT.center
 
         x = self.startx + (start[0] - pos[0])*self.mag
@@ -81,7 +83,7 @@ class Player(pygame.sprite.Sprite):
         self.rect = Rect(0, 0, self.rect.width*1/4, self.rect.height*1/4)  #FIXME TEST
         self.rect.center = CENTER
 
-        self.hearts = [HeartMark((60+120*x, SCR_RECT.height-60)) for x in range(self.lives)]
+        self.hearts = [HeartMark((SCR_RECT.width - (60+60*x), SCR_RECT.height - 45)) for x in range(self.lives)]
 
         self.fpx = float(self.rect.x)
         self.fpy = float(self.rect.y)
@@ -100,7 +102,7 @@ class Player(pygame.sprite.Sprite):
         if self.lives < 0:        # remains no life
             return False
         else:
-            self.hearts.pop().kill()                 # remove one heart
+            self.hearts.pop().destroy()                 # remove one heart
             self.original_image = self.image.copy()  # for blinking
             self.invincible = 300                    # invincible time
             return True
@@ -109,14 +111,17 @@ class Player(pygame.sprite.Sprite):
         return self.invincible >= 0
 
     def update(self):
+        global player_pos
 
         if self.invincible > 0:
             self.invincible -= 1
             self.frame += 1
             self.image = self.original_image.copy()
             if (self.frame/self.blink_interval)%2 == 0:
+                #self.image.set_alpha(64) FIXME
                 set_transparency_to_surf(self.image, 64)
             else:
+                #self.image.set_alpha(255) FIXME
                 set_transparency_to_surf(self.image, 255)
         elif self.invincible == 0:
             self.invincible -= 1
@@ -187,7 +192,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.y = int(self.fpy)
         self.rect.clamp_ip(SCR_RECT)        
 
-        Data.player_pos = self.rect.center
+        player_pos = self.rect.center
 
         # Shoot a shot
         mouse_pressed = pygame.mouse.get_pressed()
@@ -221,6 +226,9 @@ class Shot(pygame.sprite.Sprite):
         self.fpvx = math.cos(self.direction) * self.speed
         self.fpvy = math.sin(self.direction) * self.speed
 
+        # Rotate image
+        self.image = pygame.transform.rotate(self.image, -180*self.direction/math.pi)
+
     def update(self):
         # Move
         self.fpx += self.fpvx
@@ -247,7 +255,7 @@ class EColi(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = pos
 
-        self.target = Data.player_pos
+        self.target = player_pos
         self.start = pos
 
         # 終点の角度を計算
@@ -270,12 +278,12 @@ class EColi(pygame.sprite.Sprite):
 
     def update(self):
 
-        # キャラクターアニメーション
+        # キャラクターアニメーション FIXME
         self.frame += 1
-        self.image = self.images[self.frame/self.animecycle%2]
+        self.image = self.images[self.frame/self.animecycle%len(self.images)]
 
         # 終点の角度を計算
-        self.target = Data.player_pos
+        self.target = player_pos
         self.start = self.rect.center
         self.direction = math.atan2(float(self.target[1]-self.start[1]), float(self.target[0]-self.start[0]))
 
@@ -291,11 +299,81 @@ class EColi(pygame.sprite.Sprite):
         self.rect.y = int(self.fpy)
 
 
+class BigEColi(pygame.sprite.Sprite):
+    """Sample Boss: no attaching and no animation"""
+
+    speed = 2  # 移動速度
+    hp = 100
+    animecycle = 2
+    frame = 180
+    animechap = 0
+    roundr = 100
+    point1 = (150, SCR_RECT.height/2)
+    point2 = (point1[0]+roundr, point1[1])  # The center of the round
+    av = 0  # Angular velocity
+
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self, self.containers)
+
+        self.rect = self.image.get_rect()
+        self.rect.center = (-self.rect.width/2, -self.rect.height/2)
+
+        # Calculate speed
+        self.fpx = float(self.rect.center[0])
+        self.fpy = float(self.rect.center[1])
+        self.fpvx = 0
+        self.fpvy = 0
+
+        # 終点の角度を計算
+        self.target = self.point1
+        self.start = self.rect.center
+        self.direction = math.atan2(float(self.target[1]-self.start[1]), float(self.target[0]-self.start[0]))
+
+        # Move
+        self.fpvx = math.cos(self.direction) * self.speed
+        self.fpvy = math.sin(self.direction) * self.speed
+
+        # Calculate Angular Velocity
+        self.av = self.speed/(2*math.pi*self.roundr/360.0)
+
+        print self.av
+
+    def hit_once(self):
+
+        # Player's shot hit me!
+        self.hp -= 1
+        return self.hp > 0
+
+    def update(self):
+
+        if self.animechap == 0:
+
+            self.fpx = min(self.fpx + self.fpvx, self.point1[0])
+            self.fpy = min(self.fpy + self.fpvy, self.point1[1])
+            self.rect.center = (int(self.fpx), int(self.fpy))
+
+            if self.rect.center == (int(self.point1[0]), int(self.point1[1])):
+                self.animechap = 1
+
+        elif self.animechap == 1:
+
+            vx = math.cos(self.frame/180.0*math.pi) * self.roundr
+            vy = math.sin(self.frame/180.0*math.pi) * self.roundr
+
+            self.rect.center = (int(self.point2[0] + vx), int(self.point2[1] - vy))
+
+            self.frame += self.av
+            
+
 class HeartMark(pygame.sprite.Sprite):
     """Life remains"""
 
     animecycle = 1
     frame = 0
+    
+    destroyed = False
+    destroy_frame = 0
+    destroy_limit = 60
 
     def __init__(self, pos):
         pygame.sprite.Sprite.__init__(self, self.containers)
@@ -305,7 +383,7 @@ class HeartMark(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = pos
 
-        self.max_frame = len(self.images) * self.animecycle  # a frame to disappear
+        self.max_frame = len(self.images) * self.animecycle  # a frame to rewind
 
     def update(self):
         # Character Animation
@@ -314,6 +392,18 @@ class HeartMark(pygame.sprite.Sprite):
         if self.frame == self.max_frame:
             self.frame = 0
 
+        if self.destroyed:
+            if self.destroy_frame >= self.destroy_limit:
+                self.kill()
+
+            dummy_image = self.image.copy()
+            dummy_image.set_alpha(255*(1- self.destroy_frame/float(self.destroy_limit)))
+            self.image = dummy_image
+
+            self.destroy_frame += 1
+
+    def destroy(self):
+        self.destroyed = True
 
 class Explosion(pygame.sprite.Sprite):
     """Explosion effect"""
@@ -435,7 +525,7 @@ class BackgroundGameover(pygame.sprite.Sprite):
 
         self.original_image = self.image.copy()
         self.opaque = 10
-        self.speed = 2
+        self.speed = 3
         self.opaque_lg = 255
         self.speed_lg = -30
 
@@ -499,14 +589,15 @@ class ScoreGameover(StringBaseSprite):
     color = (128, 128, 128)
     fontsize = 60
 
-    def __init__(self):
+    def __init__(self, gamedata):
         StringBaseSprite.__init__(self)
         self.opaque = 10
         self.speed = 2
 
+        self.gamedata = gamedata
 
     def update(self):
-        self.original_image = self.font.render(self.text.format(Data.score), True, self.color)
+        self.original_image = self.font.render(self.text.format(self.gamedata.score), True, self.color)
         self.rect.x = (SCR_RECT.width-self.image.get_width())/2
 
         if self.opaque < 255:
