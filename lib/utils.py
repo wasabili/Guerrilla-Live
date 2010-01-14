@@ -7,7 +7,7 @@ import os
 import sys
 import Numeric
 
-def load_image(filename, sprit=None, colorkey=None):
+def load_image(filename, sprit=None, autotrans=False, colorkey=None):
     """画像をロードして画像と矩形を返す"""
     filename = os.path.join("data", filename)
     try:
@@ -15,15 +15,16 @@ def load_image(filename, sprit=None, colorkey=None):
     except pygame.error, message:
         print "Cannot load image:", filename
         raise SystemExit, message
-    if colorkey is None:
-        colorkey = image.get_at((0,0))
-    image.set_colorkey(colorkey, RLEACCEL)
+    if autotrans:
+        if colorkey is None:
+            colorkey = image.get_at((0,0))
+        image.set_colorkey(colorkey, RLEACCEL)
     image.convert_alpha()
     if sprit is not None:
-        return _split_image(image, sprit)
+        return _split_image(image, sprit, autotrans)
     return image
 
-def _split_image(image, n):
+def _split_image(image, n, autotrans=False):
     """横に長いイメージを同じ大きさのn枚のイメージに分割
     分割したイメージを格納したリストを返す"""
     image_list = []
@@ -33,7 +34,8 @@ def _split_image(image, n):
     for i in range(0, w, w1):
         surface = pygame.Surface((w1,h))
         surface.blit(image, (0,0), (i,0,w1,h))
-        surface.set_colorkey(surface.get_at((0,0)), RLEACCEL)
+        if autotrans:
+            surface.set_colorkey(surface.get_at((0,0)), RLEACCEL)
         surface.convert_alpha()
         image_list.append(surface)
     return image_list
