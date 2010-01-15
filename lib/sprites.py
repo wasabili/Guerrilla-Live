@@ -44,26 +44,104 @@ class StringBaseSprite(pygame.sprite.Sprite):
 class BackgroundStart():
     """Start Background"""
 
-    frame = 0
+    enable_image_drawing = True
 
     opaque = 0
     speed = 3
 
-    def draw(self, screen):
+    def draw(self, screen):  #FIXME
+
+        if self.enable_image_drawing:
+            if self.opaque < 255:
+                if self.opaque + self.speed < 255:
+                    self.opaque += self.speed
+                else:
+                    self.opaque = 255
+
+                dummy = self.image.copy()
+                dummy.set_alpha(self.opaque)
+
+            else:
+                dummy = self.image
+
+            screen.fill((0, 0, 0))
+            screen.blit(dummy, (0, 0))
+
+        else:
+            screen.fill((0,0,0))
+
+class TitleOpening(pygame.sprite.Sprite):
+
+    opaque = 0
+    speed = 3
+
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self, self.containers)
+        self.rect = self.image.get_rect()
+        self.rect.x = (SCR_RECT.width - self.rect.width)/2
+        self.rect.y = self.y
+
+        self.original_image = self.image.copy()
+
+    def update(self):  #FIXME
         if self.opaque < 255:
             if self.opaque + self.speed < 255:
                 self.opaque += self.speed
             else:
                 self.opaque = 255
 
-            dummy = self.image.copy()
-            dummy.set_alpha(self.opaque)
+            self.image = self.original_image.copy()
+            set_transparency_to_surf(self.image, self.opaque)
 
         else:
-            dummy = self.image
+            self.image = self.original_image
 
-        screen.fill((0, 0, 0))
-        screen.blit(dummy, (0, 0))
+
+class PushSpaceOpening(StringBaseSprite):
+
+    y = 500
+    text = 'PUSH SPACE KEY'
+    color = (255, 255, 255)
+    fontsize = 40
+
+    frame = 0
+    wait = 90
+
+    def __init__(self):
+        StringBaseSprite.__init__(self)
+
+        self.original_image = self.image.copy()
+        self.opaque = 100
+        self.speed = 3
+        self.min_opaque = 55
+        self.max_opaque = 200
+
+
+    def update(self):
+
+        if self.frame >= self.wait:
+            if self.opaque+self.speed < self.min_opaque or self.opaque+self.speed > self.max_opaque:
+                self.speed *= -1
+            self.opaque += self.speed
+
+            self.image = self.original_image.copy()
+            set_transparency_to_surf(self.image, self.opaque)
+
+        else:
+            self.frame += 1
+
+            self.image = self.original_image.copy()
+            set_transparency_to_surf(self.image, 0)
+
+class CreditOpening(StringBaseSprite):
+
+    y = 680
+    text = 'Powered by Wasabi'
+    color = (255, 255, 255)
+    fontsize = 20
+
+    def __init__(self):
+        StringBaseSprite.__init__(self)
 
 
 #########################################################################################
@@ -160,7 +238,6 @@ class HighlightSelect(pygame.sprite.Sprite):
         self.rect.x = self.entrylist[0][0]
         self.rect.y = self.entrylist[0][1] - (60-self.font_height)/2
 
-        #self.diff = (self.rect.height-self.font_height)/2 FIXME
         self.diffx = -60
         self.diffy = -6
 
@@ -173,10 +250,11 @@ class HighlightSelect(pygame.sprite.Sprite):
             if pressed_keys[K_UP] and self.index >= 1:
                 self.index -= 1
                 self.sidebar.change(self.index)
+                self.timer = time.time()
             if pressed_keys[K_DOWN] and self.index <= len(self.entrylist)-2:
                 self.index += 1
                 self.sidebar.change(self.index)
-            self.timer = time.time()
+                self.timer = time.time()
 
 
         self.blinkimage = self.original_blinkimage.copy()
@@ -636,85 +714,6 @@ class Explosion(pygame.sprite.Sprite):
         self.frame += 1
         if self.frame == self.max_frame:
             self.kill()  # disappear
-
-
-#########################################################################################
-#                     OPENING ANIMATION                                                 #
-#########################################################################################
-
-
-class EColiOpening(EColi):
-    """Opening Animation"""
-
-    speed = 1.5
-
-    def __init__(self, pos):
-        EColi.__init__(self, pos)
-        self.fpvx = self.speed
-        self.fpvy = 0
-
-    def update(self):
-        # Character Animation
-        self.frame += 1
-        self.image = self.images[self.frame/self.animecycle%2]
-
-        # Move
-        self.fpx += self.fpvx
-        self.fpy += self.fpvy
-        self.rect.x = int(self.fpx)
-        self.rect.y = int(self.fpy)
-
-        # loop, loop, loop
-        if SCR_RECT.right < self.rect.left:
-            self.fpx = -200
-
-
-
-class TitleOpening(StringBaseSprite):
-
-    y = 100
-    text = 'Guerrilla Live(!)'
-    color = (255, 0, 0)
-    fontsize = 80
-
-    def __init__(self):
-        StringBaseSprite.__init__(self)
-
-class PushSpaceOpening(StringBaseSprite):
-
-    y = 300
-    text = 'PUSH SPACE KEY'
-    color = (255, 255, 255)
-    fontsize = 40
-
-    def __init__(self):
-        StringBaseSprite.__init__(self)
-
-        self.original_image = self.image.copy()
-        self.opaque = 100
-        self.speed = 3
-        self.min_opaque = 55
-        self.max_opaque = 200
-
-
-    def update(self):
-        if self.opaque+self.speed < self.min_opaque or self.opaque+self.speed > self.max_opaque:
-            self.speed *= -1
-        self.opaque += self.speed
-
-        self.image = self.original_image.copy()
-        set_transparency_to_surf(self.image, self.opaque)
-
-
-class CreditOpening(StringBaseSprite):
-
-    y = 680
-    text = 'Powered by Wasabi'
-    color = (255, 255, 255)
-    fontsize = 20
-
-    def __init__(self):
-        StringBaseSprite.__init__(self)
 
 
 #########################################################################################

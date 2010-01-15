@@ -66,7 +66,6 @@ class Guerrilla(object):
         self.bosses = pygame.sprite.Group()             # Bosses Group
 
         # Assign default sprite groups
-        EColiOpening.containers = self.overall, self.start_all
         TitleOpening.containers = self.overall, self.start_all
         CreditOpening.containers = self.overall, self.start_all
         PushSpaceOpening.containers = self.overall, self.start_all
@@ -91,6 +90,9 @@ class Guerrilla(object):
 
         # Start Objects
         self.bg_start = BackgroundStart()
+        TitleOpening() #FIXME
+        PushSpaceOpening() #FIXME
+        CreditOpening() #FIXME        self.bg_start = BackgroundStart()
 
         # Select Objects
         self.bg_select = BackgroundSelect()
@@ -107,15 +109,6 @@ class Guerrilla(object):
         # Playing Animation
         self.player = Player()  # own ship
         self.bg_playing = BackgroundPlaying()  #FIXME
-
-        # Opening Animation
-        self.start_animations = [] #FIXME
-        self.start_animations += [EColiOpening((30, 500))]
-        self.start_animations += [EColiOpening((100, 500))]
-        self.start_animations += [EColiOpening((170, 500))]
-        TitleOpening() #FIXME
-        PushSpaceOpening() #FIXME
-        CreditOpening() #FIXME
 
         # GameOver Animation
         TitleGameover() #FIXME
@@ -319,7 +312,8 @@ class Guerrilla(object):
         Explosion.images = load_image("explosion.png", 16, autotrans=True)
         HeartMark.images = load_image("heart-animation.png", 96, autotrans=True)
 
-        HighlightSelect.image = load_image("highlight.png") #FIXME autotrans
+        TitleOpening.image = load_image("logo.png")
+        HighlightSelect.image = load_image("highlight.png")
         SidebarSelect.images = load_image("sidebar.png", 7)
 
         # Load background
