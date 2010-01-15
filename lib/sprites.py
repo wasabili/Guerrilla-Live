@@ -270,6 +270,10 @@ class HighlightSelect(pygame.sprite.Sprite):
             self.rect.x = self.entrylist[self.index][0] + self.diffx
             self.rect.y = self.entrylist[self.index][1] + self.diffy
             
+    def get_index(self):
+
+        return self.index
+
 
 class SidebarSelect(pygame.sprite.Sprite):
 
@@ -409,6 +413,7 @@ class Player(pygame.sprite.Sprite):
 
     reload_time = 5
     frame = 0L
+    animecycle = 2
 
     lives = 3
     hearts = []
@@ -417,6 +422,8 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self):
         pygame.sprite.Sprite.__init__(self, self.containers)
+        
+        self.image = self.images[0]
         self.rect = self.image.get_rect()
         self.rect = Rect(0, 0, self.rect.width*1/4, self.rect.height*1/4)  #FIXME TEST
         self.rect.center = CENTER
@@ -428,6 +435,7 @@ class Player(pygame.sprite.Sprite):
         self.fpvx = 0
         self.fpvy = 0
 
+        self.frame = 0L
         self.reload_timer = 0
 
     def killed_once(self):
@@ -451,16 +459,19 @@ class Player(pygame.sprite.Sprite):
     def update(self):
         global player_pos
 
+        # Character Animation
+        self.image = self.images[self.frame/self.animecycle%len(self.images)]
+        self.frame += 1
+
         if self.invincible > 0:
             self.invincible -= 1
-            self.frame += 1
             self.image = self.original_image.copy()
             if (self.frame/self.blink_interval)%2 == 0:
-                #self.image.set_alpha(64) FIXME
-                set_transparency_to_surf(self.image, 64)
+                self.image.set_alpha(64)
+                #set_transparency_to_surf(self.image, 64) #FIXME
             else:
-                #self.image.set_alpha(255) FIXME
-                set_transparency_to_surf(self.image, 255)
+                self.image.set_alpha(255)
+                #set_transparency_to_surf(self.image, 255) #FIXME
         elif self.invincible == 0:
             self.invincible -= 1
             self.image = self.original_image

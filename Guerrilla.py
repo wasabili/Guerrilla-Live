@@ -318,7 +318,7 @@ class Guerrilla(object):
         """Load images"""
 
         # Register images into sprites
-        Player.image = load_image("player.png")
+        Player.images = load_image("player.png", 100, autotrans=True)
         Shot.image = load_image("shot.png")
         EColi.images = load_image("ecolis.png", 3, autotrans=True)
         BigEColi.image = load_image("big-ecoli.png")  #FIXME FIXME
