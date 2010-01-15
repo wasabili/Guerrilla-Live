@@ -35,6 +35,63 @@ class StringBaseSprite(pygame.sprite.Sprite):
         self.rect.y = self.y
 
 
+#########################################################################################
+#                     CREDIT ANIMATION                                                  #
+#########################################################################################
+
+
+class AuthorCredit(StringBaseSprite):
+    """Start Background"""
+
+    FADEIN, WAIT, FADEOUT, EXTRA, END = range(5)
+    state = FADEIN
+    y = SCR_RECT.height/2
+    text = 'Wasabi Presents'
+    color = (255, 255, 255)
+    fontsize = 20
+    
+    def __init__(self):
+        StringBaseSprite.__init__(self)
+
+        self.original_image = self.image.copy()
+        self.frame = 0
+        self.opaque = 0
+        self.speed = 3
+        self.wait = 80
+        self.extra = 40
+
+    def update(self):
+        if self.state == self.FADEIN:
+            if self.opaque + self.speed < 255:
+                self.opaque += self.speed
+            else:
+                self.opaque = 255
+                self.state = self.WAIT
+                self.frame = 0
+        
+        elif self.state == self.WAIT:
+            if self.frame > self.wait:
+                self.state = self.FADEOUT
+
+        elif self.state == self.FADEOUT:
+            if self.opaque - self.speed > 0:
+                self.opaque -= self.speed
+            else:
+                self.opaque = 0
+                self.state = self.EXTRA
+                self.frame = 0
+
+        elif self.state == self.EXTRA:
+            if self.frame > self.extra:
+                self.state = self.END
+        
+        self.image = self.original_image.copy()
+        set_transparency_to_surf(self.image, self.opaque)
+
+        self.frame += 1
+
+    def havefinished(self):
+        return self.state == self.END
 
 #########################################################################################
 #                     START ANIMATION                                                   #
@@ -106,44 +163,42 @@ class PushSpaceOpening(StringBaseSprite):
     color = (255, 255, 255)
     fontsize = 40
 
-    frame = 0
-    wait = 90
+    wait = 75
 
     def __init__(self):
         StringBaseSprite.__init__(self)
 
         self.original_image = self.image.copy()
-        self.opaque = 100
+        self.opaque = 0
         self.speed = 3
         self.min_opaque = 55
         self.max_opaque = 200
 
+        self.frame = 0
+        self.blink = False
+
 
     def update(self):
 
-        if self.frame >= self.wait:
-            if self.opaque+self.speed < self.min_opaque or self.opaque+self.speed > self.max_opaque:
-                self.speed *= -1
-            self.opaque += self.speed
-
-            self.image = self.original_image.copy()
-            set_transparency_to_surf(self.image, self.opaque)
-
-        else:
-            self.frame += 1
+        if self.frame < self.wait:
 
             self.image = self.original_image.copy()
             set_transparency_to_surf(self.image, 0)
+            self.frame += 1
 
-class CreditOpening(StringBaseSprite):
+        else:
+            if not self.blink:
+                if self.opaque + self.speed > self.max_opaque:
+                    self.blink = True
 
-    y = 680
-    text = 'Powered by Wasabi'
-    color = (255, 255, 255)
-    fontsize = 20
+            else:
+                if self.opaque+self.speed < self.min_opaque or self.opaque+self.speed > self.max_opaque:
+                    self.speed *= -1
 
-    def __init__(self):
-        StringBaseSprite.__init__(self)
+            self.opaque += self.speed
+            self.image = self.original_image.copy()
+            set_transparency_to_surf(self.image, self.opaque)
+
 
 
 #########################################################################################
@@ -220,7 +275,7 @@ class HighlightSelect(pygame.sprite.Sprite):
     speed = 10
     frame = 0
     animecycle = 4
-    wait = 0.08
+    wait = 0.12
     timer = 0
     
 
@@ -332,7 +387,7 @@ class SidebarSelect2(SidebarSelect):
  
         self.image = self.images[0]
         self.rect = self.image.get_rect()
-        self.rect.center = (120, SCR_RECT.height/2)
+        self.rect.center = (100, SCR_RECT.height/2)
  
         self.oldindex = 0
         self.newindex = 0
@@ -342,6 +397,7 @@ class SidebarSelect2(SidebarSelect):
         self.opaque = 0
  
     def change(self, index, up):
+        self.oldindex = self.newindex
         self.newindex = index
         self.opaque = 0      
  
@@ -425,7 +481,7 @@ class Player(pygame.sprite.Sprite):
         
         self.image = self.images[0]
         self.rect = self.image.get_rect()
-        self.rect = Rect(0, 0, self.rect.width*1/4, self.rect.height*1/4)  #FIXME TEST
+        self.rect = Rect(0, 0, self.rect.width*3/4, self.rect.height*3/4)  #FIXME TEST
         self.rect.center = CENTER
 
         self.hearts = [HeartMark((SCR_RECT.width - (60+60*x), SCR_RECT.height - 45)) for x in range(self.lives)]
@@ -449,7 +505,6 @@ class Player(pygame.sprite.Sprite):
             return False
         else:
             self.hearts.pop().destroy()                 # remove one heart
-            self.original_image = self.image.copy()  # for blinking
             self.invincible = 300                    # invincible time
             return True
 
@@ -465,7 +520,7 @@ class Player(pygame.sprite.Sprite):
 
         if self.invincible > 0:
             self.invincible -= 1
-            self.image = self.original_image.copy()
+            self.image = self.image.copy()
             if (self.frame/self.blink_interval)%2 == 0:
                 self.image.set_alpha(64)
                 #set_transparency_to_surf(self.image, 64) #FIXME
@@ -474,7 +529,6 @@ class Player(pygame.sprite.Sprite):
                 #set_transparency_to_surf(self.image, 255) #FIXME
         elif self.invincible == 0:
             self.invincible -= 1
-            self.image = self.original_image
 
         if self.enable_acceleration:
             # Accel player
@@ -859,15 +913,13 @@ class ScoreGameover(StringBaseSprite):
     color = (128, 128, 128)
     fontsize = 60
 
-    def __init__(self, gamedata):
+    def __init__(self):
         StringBaseSprite.__init__(self)
         self.opaque = 10
         self.speed = 2
 
-        self.gamedata = gamedata
-
     def update(self):
-        self.original_image = self.font.render(self.text.format(self.gamedata.score), True, self.color)
+        self.original_image = self.font.render(self.text.format(self.score), True, self.color)
         self.rect.x = (SCR_RECT.width-self.image.get_width())/2
 
         if self.opaque < 255:

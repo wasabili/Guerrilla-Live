@@ -65,4 +65,7 @@ class GameData(object):
         self.killed = 0
         self.bosslimit = 300
 
+    def get_score(self):
+        return self.killed*10
+
 

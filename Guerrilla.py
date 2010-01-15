@@ -48,13 +48,13 @@ class Guerrilla(object):
 
         # Init data
         self._pending_game_state = None
-        self.gamedata = GameData(0) #FIXME
 
         # state of a game
-        self.game_state = START
+        self.game_state = CREDIT
 
         # Create sprite groups
         self.overall = pygame.sprite.RenderUpdates()
+        self.credit_all = pygame.sprite.Group()         # Credit screen
         self.start_all = pygame.sprite.Group()          # Opening Screen
         self.pre_select_all = pygame.sprite.Group()     # Select Highlights
         self.select_all = pygame.sprite.Group()         # Select Screen
@@ -66,8 +66,9 @@ class Guerrilla(object):
         self.bosses = pygame.sprite.Group()             # Bosses Group
 
         # Assign default sprite groups
+        AuthorCredit.containers = self.overall, self.credit_all
+
         TitleOpening.containers = self.overall, self.start_all
-        CreditOpening.containers = self.overall, self.start_all
         PushSpaceOpening.containers = self.overall, self.start_all
 
         ArcadeSelect.containers = self.overall, self.select_all
@@ -88,11 +89,14 @@ class Guerrilla(object):
         Explosion.containers = self.overall, self.play_all
         HeartMark.containers = self.overall, self.play_all
 
+
+        # Credit Objects
+        self.auther = AuthorCredit() #FIXME        self.bg_start = BackgroundStart()
+
         # Start Objects
         self.bg_start = BackgroundStart()
         TitleOpening() #FIXME
         PushSpaceOpening() #FIXME
-        CreditOpening() #FIXME        self.bg_start = BackgroundStart()
 
         # Select Objects
         self.bg_select = BackgroundSelect()
@@ -106,15 +110,15 @@ class Guerrilla(object):
         sidebar = SidebarSelect2() #FIXME
         self.highlight = HighlightSelect(sidebar)
 
-        # Playing Animation
+        # Play Objects
         self.player = Player()  # own ship
         self.bg_playing = BackgroundPlaying()  #FIXME
 
-        # GameOver Animation
-        TitleGameover() #FIXME
-        ScoreGameover(self.gamedata) #FIXME
-        PushSpaceGameover() #FIXME
-        BackgroundGameover() # FIXME
+        # GameOver Objects
+        TitleGameover()
+        ScoreGameover()
+        PushSpaceGameover()
+        BackgroundGameover()
 
         # Recycle box
         self.recycled_ecolis = []
@@ -123,7 +127,12 @@ class Guerrilla(object):
     def update(self):
         """Update state of a game"""
 
-        if self.game_state == START:
+        if self.game_state == CREDIT:
+            self.credit_all.update()
+            if self.auther.havefinished():
+                self.pendingchangestate(START)
+
+        elif self.game_state == START:
             self.start_all.update()
 
         elif self.game_state == SELECT:
@@ -140,6 +149,9 @@ class Guerrilla(object):
             self.play_all.update()
             self.collision_detection()
 
+        elif self.game_state == GAMEEND:
+            ScoreGameover.score = self.gamedata.get_score()
+
         elif self.game_state == GAMEOVER:
             self.pre_gameover_all.update()  #FIXME
             self.gameover_all.update()
@@ -148,7 +160,11 @@ class Guerrilla(object):
     def draw(self, screen):
         """Draw game"""
 
-        if self.game_state == START:            # start
+        if self.game_state == CREDIT:
+            screen.fill((0,0,0))
+            self.credit_all.draw(screen)
+
+        elif self.game_state == START:            # start
             self.bg_start.draw(screen)              # Background
             self.start_all.draw(screen)
 
@@ -167,7 +183,6 @@ class Guerrilla(object):
 
         elif self.game_state == GAMEEND:    # moratorium after gameover
             BackgroundGameover.lastgame_image = screen.copy()
-            self.gamedata.score = self.gamedata.killed * 10  # FIXME scoring
             self.pendingchangestate(GAMEOVER)
 
         elif self.game_state == GAMEOVER:   # game over
@@ -187,9 +202,6 @@ class Guerrilla(object):
                 pygame.quit()
                 sys.exit()
 
-            elif event.type == KEYDOWN and event.key == K_e: # FIXME debug
-                self.pendingchangestate(GAMEEND)
-
             elif event.type == KEYDOWN and event.key == K_F2:       # Fullscreen
                 self.togglefullscreen()
 
@@ -199,12 +211,16 @@ class Guerrilla(object):
                     self.pendingchangestate(SELECT)
 
                 elif self.game_state == SELECT:
-                    self.pendingchangestate(PLAY)  #FIXME FIXME
+                    self.playnewgame()
 
                 elif self.game_state == GAMEOVER:
                     self.init_game()  # start new game
                     self.pendingchangestate(START)
 
+            elif event.type == KEYDOWN and event.key == K_RETURN:    # Hit Space
+
+                if self.game_state == SELECT:
+                    self.playnewgame()
 
     def collision_detection(self):
         """Detect collision"""
@@ -223,17 +239,18 @@ class Guerrilla(object):
             if not self.player.is_invincible():
                 Player.bomb_sound.play()
             if not self.player.killed_once(): # die once
-                self.game_state = GAMEEND  # Game Over
+                self.pendingchangestate(GAMEEND)  # Game Over
 
 
         if self.game_state == PLAYBOSS:
 
             # Between Boss and shots
-            boss_collided = pygame.sprite.spritecollide(self.boss, self.shots, True)
-            if boss_collided:
+            shot_collided = pygame.sprite.spritecollide(self.boss, self.shots, True)
+            for shot in shot_collided:
                 #BigEColi.hit_sound.play() FIXME
+                Explosion(shot.rect.center)  # Draw explosion
                 if not self.boss.hit_once():
-                    self.game_state = GAMEEND
+                    self.pendingchangestate(GAMEEND)
         
             # Between player and Boss
             player_collided = pygame.sprite.spritecollide(self.player, self.bosses, False)
@@ -241,7 +258,7 @@ class Guerrilla(object):
                 if not self.player.is_invincible():
                     Player.bomb_sound.play()
                 if not self.player.killed_once(): # die once
-                    self.game_state = GAMEEND  # Game Over
+                    self.pendingchangestate(GAMEEND)  # Game Over
 
 
     def pendingchangestate(self, state):
@@ -302,6 +319,17 @@ class Guerrilla(object):
 
         self.boss = BigEColi()
         self.pendingchangestate(PLAYBOSS)
+
+
+    def playnewgame(self):
+        """Something is selected"""
+
+        index = self.highlight.get_index()
+        if index == 0:
+            self.gamedata = GameData(0)
+            self.pendingchangestate(PLAY)  #FIXME FIXME
+        if index == 6:
+            print 'Help'
 
 
     def togglefullscreen(self):
