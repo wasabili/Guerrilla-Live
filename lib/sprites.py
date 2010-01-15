@@ -154,8 +154,6 @@ class CreditOpening(StringBaseSprite):
 class BackgroundSelect():
     """Select Background"""
 
-    frame = 0
-
     opaque = 0
     speed = 50
 
@@ -251,11 +249,11 @@ class HighlightSelect(pygame.sprite.Sprite):
             pressed_keys = pygame.key.get_pressed()
             if pressed_keys[K_UP] and self.index >= 1:
                 self.index -= 1
-                self.sidebar.change(self.index)
+                self.sidebar.change(self.index, True)
                 self.timer = time.time()
             if pressed_keys[K_DOWN] and self.index <= len(self.entrylist)-2:
                 self.index += 1
-                self.sidebar.change(self.index)
+                self.sidebar.change(self.index, False)
                 self.timer = time.time()
 
 
@@ -272,13 +270,10 @@ class HighlightSelect(pygame.sprite.Sprite):
             self.rect.x = self.entrylist[self.index][0] + self.diffx
             self.rect.y = self.entrylist[self.index][1] + self.diffy
             
+
 class SidebarSelect(pygame.sprite.Sprite):
 
-    oldindex = 0
-    newindex = 0
-    frame = 0
     anime = 15
-    animecycle = 4
     timer = 0
   
     def __init__(self):
@@ -288,34 +283,88 @@ class SidebarSelect(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = (120, SCR_RECT.height/2)
 
-        self.fpy = float(self.rect.y)
+        self.speed = SCR_RECT.height/self.anime
 
-        self.oldindex = 0
-        self.newindex = 0
+        self.order = []
+        for i, image in enumerate(self.images):
+            y = 0 if i == 0 else SCR_RECT.height
+            self.order.append([image, y, 0])
 
-        self.starty = SCR_RECT.height
-        self.speed = self.starty/self.anime
-
-    def change(self, index):
-        self.newindex = index
-        self.frame = self.anime
-        self.fpy = self.starty
+    def change(self, index, up):
+        if up:
+            self.order[index+1][2] = self.speed  # add animation
+        else:
+            self.order[index][2] = -self.speed  # add animation
 
     def update(self):
 
+        newsurf = pygame.Surface((300, SCR_RECT.height))
+        newsurf.fill((0,0,0))
+
+        for i, (image, fpy, fpvy) in enumerate(self.order):
+
+            newsurf.blit(image, (0,int(fpy)))
+
+            if fpvy < 0:
+                fpy = max(fpy + fpvy, 0)
+                self.order[i][1] = fpy
+                if fpy == 0:
+                    self.order[i][2] = 0
+            elif fpvy > 0:
+                fpy = min(fpy + fpvy, SCR_RECT.height)
+                self.order[i][1] = fpy
+                if fpy == SCR_RECT.height:
+                    self.order[i][2] = 0
+
+        self.image = newsurf
+
+
+class SidebarSelect2(SidebarSelect):
+ 
+    frame = 0
+
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self, self.containers)
+ 
+        self.image = self.images[0]
+        self.rect = self.image.get_rect()
+        self.rect.center = (120, SCR_RECT.height/2)
+ 
+        self.oldindex = 0
+        self.newindex = 0
+ 
+        self.starty = SCR_RECT.height
+        self.speed = 15
+        self.opaque = 0
+ 
+    def change(self, index, up):
+        self.newindex = index
+        self.opaque = 0      
+ 
+    def update(self):
+ 
         if self.oldindex != self.newindex:
             newsurf = pygame.Surface((300, SCR_RECT.height))
             newsurf.fill((0,0,0))
             newsurf.blit(self.images[self.oldindex], (0,0))
+ 
+            if self.opaque < 255:
+                if self.opaque + self.speed <255:
+                    self.opaque += self.speed
+                else:
+                    self.opaque = 255
 
-            self.fpy = max(self.fpy - self.speed, 0)
-            newsurf.blit(self.images[self.newindex], (0, self.fpy))
+                dummy = self.images[self.newindex].copy()
+                dummy.set_alpha(self.opaque)
 
-            self.image = newsurf
-
-            if self.fpy == 0:
+                newsurf.blit(dummy, (0, 0))
+            elif self.opaque == 255:
                 self.oldindex = self.newindex
-                
+
+                newsurf.blit(self.images[self.newindex], (0, 0))
+ 
+            self.image = newsurf
+ 
         else:
             self.image = self.images[self.oldindex]
 

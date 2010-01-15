@@ -21,8 +21,8 @@ class Guerrilla(object):
         pygame.init()
 
         # make a window
-        screen = pygame.display.set_mode(SCR_RECT.size, pygame.SRCALPHA, 32)
-        #screen = pygame.display.set_mode(SCR_RECT.size, pygame.SRCALPHA|DOUBLEBUF|HWSURFACE|FULLSCREEN, 32)  #FIXME
+        self.fullscreen = False
+        self._screen = pygame.display.set_mode(SCR_RECT.size, pygame.SRCALPHA)
         pygame.display.set_caption(GAME_TITLE)
 
         # load contents
@@ -37,7 +37,7 @@ class Guerrilla(object):
         while True:
             clock.tick(60)
             self.update()
-            self.draw(screen)
+            self.draw(self._screen)
             pygame.display.update()
             self.key_handler()
             self.triggerstatechange()
@@ -102,8 +102,8 @@ class Guerrilla(object):
         LevelSelect(3)
         LevelSelect(4)
         LevelSelect(5)
-        HelpSelect()  #FIXME
-        sidebar = SidebarSelect()
+        HelpSelect()
+        sidebar = SidebarSelect2() #FIXME
         self.highlight = HighlightSelect(sidebar)
 
         # Playing Animation
@@ -189,6 +189,9 @@ class Guerrilla(object):
 
             elif event.type == KEYDOWN and event.key == K_e: # FIXME debug
                 self.pendingchangestate(GAMEEND)
+
+            elif event.type == KEYDOWN and event.key == K_F2:       # Fullscreen
+                self.togglefullscreen()
 
             elif event.type == KEYDOWN and event.key == K_SPACE:    # Hit Space
 
@@ -300,6 +303,16 @@ class Guerrilla(object):
         self.boss = BigEColi()
         self.pendingchangestate(PLAYBOSS)
 
+
+    def togglefullscreen(self):
+        """Switch Fullscreen or not"""
+
+        if self.fullscreen:
+            self._screen = pygame.display.set_mode(SCR_RECT.size, pygame.SRCALPHA)
+        else:
+            self._screen = pygame.display.set_mode(SCR_RECT.size, pygame.SRCALPHA|DOUBLEBUF|HWSURFACE|FULLSCREEN)
+
+        self.fullscreen = not self.fullscreen
 
     def load_images(self):
         """Load images"""
