@@ -72,6 +72,8 @@ class BackgroundStart():
 
 class TitleOpening(pygame.sprite.Sprite):
 
+    y = 250
+
     opaque = 0
     speed = 3
 
