@@ -22,7 +22,7 @@ class Guerrilla(object):
 
         # make a window
         self.fullscreen = False
-        self._screen = pygame.display.set_mode(SCR_RECT.size, pygame.SRCALPHA)
+        self._screen = pygame.display.set_mode(SCR_RECT.size, pygame.SRCALPHA|DOUBLEBUF|HWSURFACE)
         pygame.display.set_caption(GAME_TITLE)
 
         # load contents
@@ -50,7 +50,7 @@ class Guerrilla(object):
         self._pending_game_state = None
 
         # state of a game
-        self.game_state = CREDIT
+        self.game_state = START  #FIXME FIXME
 
         # Create sprite groups
         self.overall = pygame.sprite.RenderUpdates()
@@ -91,7 +91,7 @@ class Guerrilla(object):
 
 
         # Credit Objects
-        self.auther = AuthorCredit() #FIXME        self.bg_start = BackgroundStart()
+        self.auther = AuthorCredit() #FIXME
 
         # Start Objects
         self.bg_start = BackgroundStart()
@@ -109,6 +109,7 @@ class Guerrilla(object):
         HelpSelect()
         sidebar = SidebarSelect2() #FIXME
         self.highlight = HighlightSelect(sidebar)
+        self.ef_select = EffectSelect()
 
         # Play Objects
         self.player = Player()  # own ship
@@ -141,7 +142,7 @@ class Guerrilla(object):
 
         elif self.game_state == PLAY:
             self.play_all.update()
-            self.gen_daichokin_randomly(0.15)  #FIXME
+            self.gen_ecoli_randomly(self.gamedata.freq)  #FIXME
             self.collision_detection()  # detect collision
             self.bosslimitbroke() and self.enterbossbattle() # FIXME
 
@@ -172,6 +173,7 @@ class Guerrilla(object):
             self.bg_select.draw(screen)             # Background
             self.pre_select_all.draw(screen)
             self.select_all.draw(screen)
+            self.ef_select.draw(screen)
 
         elif self.game_state == PLAY:           # playing
             self.bg_playing.draw(screen)            # Background
@@ -271,7 +273,7 @@ class Guerrilla(object):
             self.game_state = self._pending_game_state
             self._pending_game_state = None
 
-    def gen_daichokin_randomly(self, freq):
+    def gen_ecoli_randomly(self, freq):
         """Create E.Colis randomly"""
 
         if int(random.random()*(1/freq)) == 0:
@@ -317,7 +319,7 @@ class Guerrilla(object):
     def enterbossbattle(self):
         """Enter boss battle"""
 
-        self.boss = BigEColi()
+        self.boss = self.gamedata.boss()
         self.pendingchangestate(PLAYBOSS)
 
 
@@ -326,7 +328,7 @@ class Guerrilla(object):
 
         index = self.highlight.get_index()
         if index == 0:
-            self.gamedata = GameData(0)
+            self.gamedata = GameData(0, BigEColi)
             self.pendingchangestate(PLAY)  #FIXME FIXME
         if index == 6:
             print 'Help'
@@ -336,7 +338,7 @@ class Guerrilla(object):
         """Switch Fullscreen or not"""
 
         if self.fullscreen:
-            self._screen = pygame.display.set_mode(SCR_RECT.size, pygame.SRCALPHA)
+            self._screen = pygame.display.set_mode(SCR_RECT.size, pygame.SRCALPHA|DOUBLEBUF|HWSURFACE)
         else:
             self._screen = pygame.display.set_mode(SCR_RECT.size, pygame.SRCALPHA|DOUBLEBUF|HWSURFACE|FULLSCREEN)
 
@@ -356,12 +358,13 @@ class Guerrilla(object):
         TitleOpening.image = load_image("logo.png")
         HighlightSelect.image = load_image("highlight.png")
         SidebarSelect.images = load_image("sidebar.png", 7)
+        SidebarSelect.mask = load_image("mask.png")  # FIXME FIXME
 
         # Load background
         BackgroundStart.image = load_image("start.jpg")
         BackgroundSelect.image = load_image("select.jpg")
         BackgroundPlaying.image = load_image("play.jpg")
-        BackgroundGameover.image = load_image("gameover.jpg")
+        BackgroundGameover.image = load_image("lose.jpg")
 
 
     def load_sounds(self):

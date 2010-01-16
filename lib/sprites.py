@@ -209,24 +209,10 @@ class PushSpaceOpening(StringBaseSprite):
 class BackgroundSelect():
     """Select Background"""
 
-    opaque = 0
-    speed = 50
-
     def draw(self, screen):
-        if self.opaque < 255:
-            if self.opaque + self.speed < 255:
-                self.opaque += self.speed
-            else:
-                self.opaque = 255
-
-            dummy = self.image.copy()
-            dummy.set_alpha(self.opaque)
-
-        else:
-            dummy = self.image
 
         screen.fill((0, 0, 0))
-        screen.blit(dummy, (0, 0))
+        screen.blit(self.image, (0, 0))
 
 
 class ArcadeSelect(StringBaseSprite):
@@ -423,10 +409,37 @@ class SidebarSelect2(SidebarSelect):
 
                 newsurf.blit(self.images[self.newindex], (0, 0))
  
+            newsurf.blit(self.mask, (0,0)) #FIXME 
             self.image = newsurf
  
         else:
-            self.image = self.images[self.oldindex]
+            #self.image = self.images[self.oldindex] #FIXME FIXME
+            self.image = self.images[self.oldindex].copy()
+            self.image.blit(self.mask, (0,0))
+
+
+class EffectSelect():
+    """Select effects"""
+
+    opaque = 255
+    speed = -10
+
+    def __init__(self):
+        newsurf = pygame.Surface(SCR_RECT.size)
+        newsurf.fill((0,0,0))
+        self.image = newsurf
+
+    def draw(self, screen):
+        if self.opaque > 0:
+            if self.opaque + self.speed > 0:
+                self.opaque += self.speed
+            else:
+                self.opaque = 0
+
+            dummy = self.image.copy()
+            dummy.set_alpha(self.opaque)
+
+            screen.blit(dummy, (0, 0))
 
 
 #########################################################################################
@@ -481,7 +494,7 @@ class Player(pygame.sprite.Sprite):
         
         self.image = self.images[0]
         self.rect = self.image.get_rect()
-        self.rect = Rect(0, 0, self.rect.width*3/4, self.rect.height*3/4)  #FIXME TEST
+        self.rect = Rect(self.rect.width/8, self.rect.height/8, self.rect.width*3/4, self.rect.height*3/4)  #FIXME TEST
         self.rect.center = CENTER
 
         self.hearts = [HeartMark((SCR_RECT.width - (60+60*x), SCR_RECT.height - 45)) for x in range(self.lives)]

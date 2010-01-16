@@ -7,6 +7,7 @@ import os
 import sys
 import Numeric
 
+
 def load_image(filename, sprit=None, autotrans=False, colorkey=None):
     """画像をロードして画像と矩形を返す"""
     filename = os.path.join("data", filename)
@@ -61,11 +62,19 @@ class GameData(object):
     bosslimit = sys.maxint
     score = 0
 
-    def __init__(self, level): # FIXME imp level
-        self.killed = 0
-        self.bosslimit = 300
+    def __init__(self, level, boss): # FIXME imp level
+
+        if level == 0:
+            self.killed = 0
+            self.bosslimit = 300
+            self.freq = 0.15
+
+        self.set_boss(boss)
 
     def get_score(self):
         return self.killed*10
+
+    def set_boss(self, boss):
+        self.boss = boss
 
 
