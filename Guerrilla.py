@@ -22,7 +22,7 @@ class Guerrilla(object):
 
         # make a window
         self.fullscreen = False
-        self._screen = pygame.display.set_mode(SCR_RECT.size, pygame.SRCALPHA|DOUBLEBUF|HWSURFACE)
+        self._screen = pygame.display.set_mode(SCR_RECT.size, SRCALPHA|DOUBLEBUF|HWSURFACE)
         pygame.display.set_caption(GAME_TITLE)
 
         # load contents
@@ -50,7 +50,7 @@ class Guerrilla(object):
         self._pending_game_state = None
 
         # state of a game
-        self.game_state = START  #FIXME FIXME
+        self.game_state = CREDIT
 
         # Create sprite groups
         self.overall = pygame.sprite.RenderUpdates()
@@ -157,6 +157,11 @@ class Guerrilla(object):
             self.pre_gameover_all.update()  #FIXME
             self.gameover_all.update()
 
+        elif self.game_state == HELP:
+            if self.helpdraw.hasclosed():
+                self.pendingchangestate(SELECT)
+            self.helpdraw.update()
+
 
     def draw(self, screen):
         """Draw game"""
@@ -165,7 +170,7 @@ class Guerrilla(object):
             screen.fill((0,0,0))
             self.credit_all.draw(screen)
 
-        elif self.game_state == START:            # start
+        elif self.game_state == START:          # start
             self.bg_start.draw(screen)              # Background
             self.start_all.draw(screen)
 
@@ -191,6 +196,8 @@ class Guerrilla(object):
             self.pre_gameover_all.draw(screen)         # Background
             self.gameover_all.draw(screen)
 
+        elif self.game_state == HELP:
+            self.helpdraw.draw(screen)
 
     def key_handler(self):
         """Handle user event"""
@@ -207,7 +214,7 @@ class Guerrilla(object):
             elif event.type == KEYDOWN and event.key == K_F2:       # Fullscreen
                 self.togglefullscreen()
 
-            elif event.type == KEYDOWN and event.key == K_SPACE:    # Hit Space
+            elif event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_RETURN):    # Hit Space
 
                 if self.game_state == START:
                     self.pendingchangestate(SELECT)
@@ -216,13 +223,13 @@ class Guerrilla(object):
                     self.playnewgame()
 
                 elif self.game_state == GAMEOVER:
-                    self.init_game()  # start new game
+                    self.init_game()                            # start new game
                     self.pendingchangestate(START)
 
-            elif event.type == KEYDOWN and event.key == K_RETURN:    # Hit Space
+                elif self.game_state == HELP:
+                    if not self.helpdraw.whileclosing():
+                        self.helpdraw.close()
 
-                if self.game_state == SELECT:
-                    self.playnewgame()
 
     def collision_detection(self):
         """Detect collision"""
@@ -231,7 +238,7 @@ class Guerrilla(object):
         ecoli_collided = pygame.sprite.groupcollide(self.ecolis, self.shots, True, True)
         for ecoli in ecoli_collided.keys():
             self.recycle_ecoli(ecoli)
-            EColi.kill_sound.play()
+            # EColi.kill_sound.play() FIXME
             self.gamedata.killed += 1
             Explosion(ecoli.rect.center)  # Draw explosion
 
@@ -239,7 +246,8 @@ class Guerrilla(object):
         player_collided = pygame.sprite.spritecollide(self.player, self.ecolis, True)
         if player_collided:  # If there is an E.Coli that touched player 
             if not self.player.is_invincible():
-                Player.bomb_sound.play()
+                #Player.bomb_sound.play()  #FIXME
+                pass
             if not self.player.killed_once(): # die once
                 self.pendingchangestate(GAMEEND)  # Game Over
 
@@ -261,6 +269,18 @@ class Guerrilla(object):
                     Player.bomb_sound.play()
                 if not self.player.killed_once(): # die once
                     self.pendingchangestate(GAMEEND)  # Game Over
+
+
+    def playnewgame(self):
+        """Something is selected"""
+
+        index = self.highlight.get_index()
+        if index == 0:
+            self.gamedata = GameData(0, BigEColi)
+            self.pendingchangestate(PLAY)
+        if index == 6:
+            self.helpdraw = HelpDraw()
+            self.pendingchangestate(HELP)
 
 
     def pendingchangestate(self, state):
@@ -323,24 +343,13 @@ class Guerrilla(object):
         self.pendingchangestate(PLAYBOSS)
 
 
-    def playnewgame(self):
-        """Something is selected"""
-
-        index = self.highlight.get_index()
-        if index == 0:
-            self.gamedata = GameData(0, BigEColi)
-            self.pendingchangestate(PLAY)  #FIXME FIXME
-        if index == 6:
-            print 'Help'
-
-
     def togglefullscreen(self):
         """Switch Fullscreen or not"""
 
         if self.fullscreen:
-            self._screen = pygame.display.set_mode(SCR_RECT.size, pygame.SRCALPHA|DOUBLEBUF|HWSURFACE)
+            self._screen = pygame.display.set_mode(SCR_RECT.size, SRCALPHA|DOUBLEBUF|HWSURFACE)
         else:
-            self._screen = pygame.display.set_mode(SCR_RECT.size, pygame.SRCALPHA|DOUBLEBUF|HWSURFACE|FULLSCREEN)
+            self._screen = pygame.display.set_mode(SCR_RECT.size, SRCALPHA|DOUBLEBUF|HWSURFACE|FULLSCREEN)
 
         self.fullscreen = not self.fullscreen
 
@@ -359,6 +368,9 @@ class Guerrilla(object):
         HighlightSelect.image = load_image("highlight.png")
         SidebarSelect.images = load_image("sidebar.png", 7)
         SidebarSelect.mask = load_image("mask.png")  # FIXME FIXME
+
+        BackgroundHelp.images = load_image('help.png', 10)
+        ContentsHelp.image = load_image('help-contents.png')
 
         # Load background
         BackgroundStart.image = load_image("start.jpg")

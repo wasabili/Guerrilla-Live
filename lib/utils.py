@@ -6,6 +6,9 @@ from pygame.locals import *
 import os
 import sys
 import Numeric
+import Image
+import ImageFilter
+import time
 
 
 def load_image(filename, sprit=None, autotrans=False, colorkey=None):
