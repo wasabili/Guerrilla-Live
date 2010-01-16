@@ -7,7 +7,7 @@ import math
 import time
 
 from constants import *
-from utils     import set_transparency_to_surf
+from utils     import set_transparency_to_surf, get_recycled_shot, recycle_shot
 
 
 player_pos = (0, 0)
@@ -35,12 +35,53 @@ class StringBaseSprite(pygame.sprite.Sprite):
         self.rect.y = self.y
 
 
+
+class StringObjectBase():
+
+    y = 0           # abstract
+    x = None        # abstract
+    fontfamily = None   # abstract
+    fontsize = 0    # abstract
+    text = ''       # abstract
+    color = (0,0,0) # abstract
+
+    def __init__(self):
+        self.font = pygame.font.SysFont(self.fontfamily, self.fontsize)
+        self.image = self.font.render(self.text, True, self.color)
+
+        self.rect = self.image.get_rect()
+        if self.x is None:
+            self.rect.x = (SCR_RECT.width-self.image.get_width())/2
+        else:
+            self.rect.x = self.x
+        self.rect.y = self.y
+
+    def update(self):
+        pass
+
+
 #########################################################################################
 #                     CREDIT ANIMATION                                                  #
 #########################################################################################
 
 
-class AuthorCredit(StringBaseSprite):
+class CreditDraw():
+
+    def __init__(self):
+        self.author = AuthorCredit()
+
+    def update(self):
+        self.author.update()
+
+    def draw(self, screen):
+        screen.fill((0,0,0))
+        screen.blit(self.author.image, (self.author.rect.x, self.author.rect.y))
+
+    def hasfinished(self):
+        return self.author.hasfinished()
+
+
+class AuthorCredit(StringObjectBase):
     """Start Background"""
 
     FADEIN, WAIT, FADEOUT, EXTRA, END = range(5)
@@ -51,7 +92,7 @@ class AuthorCredit(StringBaseSprite):
     fontsize = 20
     
     def __init__(self):
-        StringBaseSprite.__init__(self)
+        StringObjectBase.__init__(self)
 
         self.original_image = self.image.copy()
         self.frame = 0
@@ -90,44 +131,60 @@ class AuthorCredit(StringBaseSprite):
 
         self.frame += 1
 
-    def havefinished(self):
+    def hasfinished(self):
         return self.state == self.END
+
 
 #########################################################################################
 #                     START ANIMATION                                                   #
 #########################################################################################
 
 
+class StartDraw():
+
+    def __init__(self):
+        self.bg_start = BackgroundStart()
+        self.title = TitleOpening()
+        self.pushspace = PushSpaceOpening()
+
+    def update(self):
+        self.bg_start.update()
+        self.title.update()
+        self.pushspace.update()
+
+    def draw(self, screen):
+        screen.fill((0,0,0))
+        screen.blit(self.bg_start.image, (self.bg_start.rect.x, self.bg_start.rect.y))
+        screen.blit(self.title.image, (self.title.rect.x, self.title.rect.y))
+        screen.blit(self.pushspace.image, (self.pushspace.rect.x, self.pushspace.rect.y))
+
+
 class BackgroundStart():
     """Start Background"""
-
-    enable_image_drawing = True
 
     opaque = 0
     speed = 3
 
-    def draw(self, screen):  #FIXME
+    def __init__(self):
+        self.original_image = self.image.copy()
+        self.rect = self.image.get_rect()
 
-        if self.enable_image_drawing:
-            if self.opaque < 255:
-                if self.opaque + self.speed < 255:
-                    self.opaque += self.speed
-                else:
-                    self.opaque = 255
+    def update(self):  #FIXME
 
-                dummy = self.image.copy()
-                dummy.set_alpha(self.opaque)
-
+        if self.opaque < 255:
+            if self.opaque + self.speed < 255:
+                self.opaque += self.speed
             else:
-                dummy = self.image
+                self.opaque = 255
 
-            screen.fill((0, 0, 0))
-            screen.blit(dummy, (0, 0))
+            self.image = self.original_image.copy()
+            self.image.set_alpha(self.opaque)
 
         else:
-            screen.fill((0,0,0))
+            self.image = self.original_image
 
-class TitleOpening(pygame.sprite.Sprite):
+
+class TitleOpening():
 
     y = 250
 
@@ -135,7 +192,6 @@ class TitleOpening(pygame.sprite.Sprite):
     speed = 3
 
     def __init__(self):
-        pygame.sprite.Sprite.__init__(self, self.containers)
         self.rect = self.image.get_rect()
         self.rect.x = (SCR_RECT.width - self.rect.width)/2
         self.rect.y = self.y
@@ -156,7 +212,7 @@ class TitleOpening(pygame.sprite.Sprite):
             self.image = self.original_image
 
 
-class PushSpaceOpening(StringBaseSprite):
+class PushSpaceOpening(StringObjectBase):
 
     y = 500
     text = 'PUSH SPACE KEY'
@@ -166,7 +222,7 @@ class PushSpaceOpening(StringBaseSprite):
     wait = 75
 
     def __init__(self):
-        StringBaseSprite.__init__(self)
+        StringObjectBase.__init__(self)
 
         self.original_image = self.image.copy()
         self.opaque = 0
@@ -200,22 +256,66 @@ class PushSpaceOpening(StringBaseSprite):
             set_transparency_to_surf(self.image, self.opaque)
 
 
-
 #########################################################################################
 #                     SELECT ANIMATION                                                  #
 #########################################################################################
 
 
+class SelectDraw():
+
+    def __init__(self):
+        self.bg_select = BackgroundSelect()
+        self.sidebar = SidebarSelect2()                     # FIXME
+        self.highlight = HighlightSelect(self.sidebar)
+
+        self.arcade = ArcadeSelect()
+        self.level1 = LevelSelect(1)
+        self.level2 = LevelSelect(2)
+        self.level3 = LevelSelect(3)
+        self.level4 = LevelSelect(4)
+        self.level5 = LevelSelect(5)
+        self.help = HelpSelect()
+
+        self.ef_select = EffectSelect()
+
+        self.objects = [
+            self.bg_select,
+            self.sidebar,
+            self.highlight,
+            self.arcade,
+            self.level1,
+            self.level2,
+            self.level3,
+            self.level4,
+            self.level5,
+            self.help,
+            self.ef_select
+        ]
+
+    def update(self):
+        for obj in self.objects:
+            obj.update()
+
+    def draw(self, screen):
+        screen.fill((0,0,0))
+        for obj in self.objects:
+            screen.blit(obj.image, (obj.rect.x, obj.rect.y))
+
+    def get_index(self):
+        return self.highlight.get_index()
+
+
 class BackgroundSelect():
     """Select Background"""
 
-    def draw(self, screen):
+    def __init__(self):
+        self.rect = self.image.get_rect()
 
-        screen.fill((0, 0, 0))
-        screen.blit(self.image, (0, 0))
+    def update(self):
+        pass
 
 
-class ArcadeSelect(StringBaseSprite):
+class ArcadeSelect(StringObjectBase):
 
     y = 270
     x = 350
@@ -224,10 +324,10 @@ class ArcadeSelect(StringBaseSprite):
     fontsize = 80
 
     def __init__(self):
-        StringBaseSprite.__init__(self)
+        StringObjectBase.__init__(self)
 
 
-class LevelSelect(StringBaseSprite):
+class LevelSelect(StringObjectBase):
 
     y = 350
     x = 350
@@ -238,10 +338,10 @@ class LevelSelect(StringBaseSprite):
     def __init__(self, num):
         self.text = self.text.format(num)
         self.y = self.y + 60*(num-1)
-        StringBaseSprite.__init__(self)
+        StringObjectBase.__init__(self)
 
 
-class HelpSelect(StringBaseSprite):
+class HelpSelect(StringObjectBase):
 
     y = 670
     x = 350
@@ -250,10 +350,10 @@ class HelpSelect(StringBaseSprite):
     fontsize = 80
 
     def __init__(self):
-        StringBaseSprite.__init__(self)
+        StringObjectBase.__init__(self)
 
 
-class HighlightSelect(pygame.sprite.Sprite):
+class HighlightSelect():
 
     entrylist = [(350, 270), (350, 350), (350, 410), (350, 470), (350, 530), (350, 590), (350, 670)]
     
@@ -266,7 +366,6 @@ class HighlightSelect(pygame.sprite.Sprite):
     
 
     def __init__(self, sidebar):
-        pygame.sprite.Sprite.__init__(self, self.containers)
         self.font = pygame.font.SysFont(None, 80)
         self.font_height = self.font.render('TEXT', True, (64,64,64)).get_height()
 
@@ -316,13 +415,12 @@ class HighlightSelect(pygame.sprite.Sprite):
         return self.index
 
 
-class SidebarSelect(pygame.sprite.Sprite):
+class SidebarSelect():
 
     anime = 15
     timer = 0
   
     def __init__(self):
-        pygame.sprite.Sprite.__init__(self, self.containers)
 
         self.image = self.images[0]
         self.rect = self.image.get_rect()
@@ -369,7 +467,6 @@ class SidebarSelect2(SidebarSelect):
     frame = 0
 
     def __init__(self):
-        pygame.sprite.Sprite.__init__(self, self.containers)
  
         self.image = self.images[0]
         self.rect = self.image.get_rect()
@@ -427,19 +524,19 @@ class EffectSelect():
     def __init__(self):
         newsurf = pygame.Surface(SCR_RECT.size)
         newsurf.fill((0,0,0))
-        self.image = newsurf
+        self.original_image = newsurf
+        self.image = self.original_image
+        self.rect = self.image.get_rect()
 
-    def draw(self, screen):
+    def update(self):
         if self.opaque > 0:
             if self.opaque + self.speed > 0:
                 self.opaque += self.speed
             else:
                 self.opaque = 0
 
-            dummy = self.image.copy()
-            dummy.set_alpha(self.opaque)
-
-            screen.blit(dummy, (0, 0))
+            self.image = self.original_image.copy()
+            self.image.set_alpha(self.opaque)
 
 
 #########################################################################################
@@ -450,7 +547,7 @@ class EffectSelect():
 class BackgroundPlaying():
     """Background follows player's move"""
 
-    mag = 0.1
+    mag = 0.2
 
     def __init__(self):
 
@@ -473,7 +570,6 @@ class BackgroundPlaying():
 class Player(pygame.sprite.Sprite):
     """Own ship"""
 
-    enable_acceleration = True 
     speed = 2
     accel = 0.15
     dynamic_fc = 0.05
@@ -543,64 +639,46 @@ class Player(pygame.sprite.Sprite):
         elif self.invincible == 0:
             self.invincible -= 1
 
-        if self.enable_acceleration:
-            # Accel player
-            pressed_keys = pygame.key.get_pressed()
-            if pressed_keys[K_LEFT] or pressed_keys[K_a]:
-                self.fpvx -= self.accel
-            if pressed_keys[K_RIGHT] or pressed_keys[K_d]:
-                self.fpvx += self.accel
-            if pressed_keys[K_UP] or pressed_keys[K_w]:
-                self.fpvy -= self.accel
-            if pressed_keys[K_DOWN] or pressed_keys[K_s]:
-                self.fpvy += self.accel
+        # Accel player
+        pressed_keys = pygame.key.get_pressed()
+        if pressed_keys[K_LEFT] or pressed_keys[K_a]:
+            self.fpvx -= self.accel
+        if pressed_keys[K_RIGHT] or pressed_keys[K_d]:
+            self.fpvx += self.accel
+        if pressed_keys[K_UP] or pressed_keys[K_w]:
+            self.fpvy -= self.accel
+        if pressed_keys[K_DOWN] or pressed_keys[K_s]:
+            self.fpvy += self.accel
 
-            # Calculate friction
-            if self.fpvx > 0:
-                self.fpvx -= self.dynamic_fc
-            elif self.fpvx < 0:
-                self.fpvx += self.dynamic_fc
-            if self.fpvy > 0:
-                self.fpvy -= self.dynamic_fc
-            elif self.fpvy < 0:
-                self.fpvy += self.dynamic_fc
+        # Calculate friction
+        if self.fpvx > 0:
+            self.fpvx -= self.dynamic_fc
+        elif self.fpvx < 0:
+            self.fpvx += self.dynamic_fc
+        if self.fpvy > 0:
+            self.fpvy -= self.dynamic_fc
+        elif self.fpvy < 0:
+            self.fpvy += self.dynamic_fc
 
-            # Restrict player speed by max_speed
-            if self.fpvx > self.max_speed:
-                self.fpvx = self.max_speed
-            elif self.fpvx < -self.max_speed:
-                self.fpvx = -self.max_speed
-            if self.fpvy > self.max_speed:
-                self.fpvy = self.max_speed
-            elif self.fpvy < -self.max_speed:
-                self.fpvy = -self.max_speed
+        # Restrict player speed by max_speed
+        if self.fpvx > self.max_speed:
+            self.fpvx = self.max_speed
+        elif self.fpvx < -self.max_speed:
+            self.fpvx = -self.max_speed
+        if self.fpvy > self.max_speed:
+            self.fpvy = self.max_speed
+        elif self.fpvy < -self.max_speed:
+            self.fpvy = -self.max_speed
 
-            # Restrict player position inside SCR_RECT
-            if SCR_RECT.right <= self.rect.right and self.fpvx > 0:
-                self.fpvx = 0
-            if SCR_RECT.left >= self.rect.left and self.fpvx < 0:
-                self.fpvx = 0
-            if SCR_RECT.top >= self.rect.top and self.fpvy < 0:
-                self.fpvy = 0
-            if SCR_RECT.bottom <= self.rect.bottom and self.fpvy > 0:
-                self.fpvy = 0
-
-        else:
-            # Move player
-            self.fpvx, self.fpvy = 0, 0
-
-            pressed_keys = pygame.key.get_pressed()
-            if pressed_keys[K_LEFT] or pressed_keys[K_a]:
-                self.fpvx = -self.speed
-            if pressed_keys[K_RIGHT] or pressed_keys[K_d]:
-                self.fpvx = self.speed
-            if pressed_keys[K_UP] or pressed_keys[K_w]:
-                self.fpvy = -self.speed
-            if pressed_keys[K_DOWN] or pressed_keys[K_s]:
-                self.fpvy = self.speed
-
-            # Restrict player position inside SCR_RECT
-            self.rect.clamp_ip(SCR_RECT)  
+        # Restrict player position inside SCR_RECT
+        if SCR_RECT.right <= self.rect.right and self.fpvx > 0:
+            self.fpvx = 0
+        if SCR_RECT.left >= self.rect.left and self.fpvx < 0:
+            self.fpvx = 0
+        if SCR_RECT.top >= self.rect.top and self.fpvy < 0:
+            self.fpvy = 0
+        if SCR_RECT.bottom <= self.rect.bottom and self.fpvy > 0:
+            self.fpvy = 0
 
         self.fpx += self.fpvx
         self.fpy += self.fpvy
@@ -618,8 +696,7 @@ class Player(pygame.sprite.Sprite):
             else:
                 # Shoot
                 #Player.shot_sound.play()  #FIXME
-                x, y = pygame.mouse.get_pos()
-                Shot(self.rect.center, (x,y))
+                get_recycled_shot(self.rect.center, pygame.mouse.get_pos()) or Shot(self.rect.center, pygame.mouse.get_pos())
                 self.reload_timer = self.reload_time
 
 
@@ -631,19 +708,34 @@ class Shot(pygame.sprite.Sprite):
     def __init__(self, start, target):
         pygame.sprite.Sprite.__init__(self, self.containers)
 
-        self.rect = self.image.get_rect()
+        self.rect = self.shot_image.get_rect()
         self.rect.center = start
-
-        # Calculate radian to the target
-        self.direction = math.atan2(target[1]-start[1], target[0]-start[0])
-        # Calculate position and speed
         self.fpx = float(self.rect.x)
         self.fpy = float(self.rect.y)
-        self.fpvx = math.cos(self.direction) * self.speed
-        self.fpvy = math.sin(self.direction) * self.speed
+
+        # Calculate radian to the target
+        direction = math.atan2(target[1]-start[1], target[0]-start[0])
+        self.fpvx = math.cos(direction) * self.speed
+        self.fpvy = math.sin(direction) * self.speed
 
         # Rotate image
-        self.image = pygame.transform.rotate(self.image, -180*self.direction/math.pi)
+        self.image = pygame.transform.rotate(self.shot_image, -180*direction/math.pi)
+
+    def init(self, start, target):
+        self.rect.center = start
+        self.fpx = float(self.rect.x)
+        self.fpy = float(self.rect.y)
+
+        # Calculate radian to the target
+        direction = math.atan2(target[1]-start[1], target[0]-start[0])
+        self.fpvx = math.cos(direction) * self.speed
+        self.fpvy = math.sin(direction) * self.speed
+
+        # Rotate image
+        self.image = pygame.transform.rotate(self.shot_image, -180*direction/math.pi)
+
+        # Reborn
+        self.add(self.containers)
 
     def update(self):
         # Move
@@ -655,6 +747,7 @@ class Shot(pygame.sprite.Sprite):
         # 画面外に出たらオブジェクトを破棄
         if not SCR_RECT.contains(self.rect):
             self.kill()
+            recycle_shot(self)
 
 
 class EColi(pygame.sprite.Sprite):
@@ -662,7 +755,6 @@ class EColi(pygame.sprite.Sprite):
 
     speed = 1.2  # 移動速度
     animecycle = 18  # アニメーション速度
-    frame = 0
 
     def __init__(self, pos):
         pygame.sprite.Sprite.__init__(self, self.containers)
@@ -671,23 +763,16 @@ class EColi(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = pos
 
-        self.target = player_pos
-        self.start = pos
-
-        # 終点の角度を計算
-        self.direction = math.atan2(float(self.target[1]-self.start[1]), float(self.target[0]-self.start[0]))
-
         # 速度を計算
         self.fpx = float(self.rect.x)
         self.fpy = float(self.rect.y)
-        self.fpvx = math.cos(self.direction) * self.speed
-        self.fpvy = math.sin(self.direction) * self.speed
+
+        self.frame = 0
 
     def init(self, pos):
-        frame = 0
+        self.frame = 0
         # set pos
         self.rect.center = pos
-        self.rect.clamp_ip(SCR_RECT)
         self.fpx = float(self.rect.x)
         self.fpy = float(self.rect.y)
         self.add(self.containers)
@@ -699,18 +784,18 @@ class EColi(pygame.sprite.Sprite):
         self.image = self.images[self.frame/self.animecycle%len(self.images)]
 
         # 終点の角度を計算
-        self.target = player_pos
-        self.start = self.rect.center
-        self.direction = math.atan2(float(self.target[1]-self.start[1]), float(self.target[0]-self.start[0]))
+        target = player_pos
+        start = self.rect.center
+        direction = math.atan2(float(target[1]-start[1]), float(target[0]-start[0]))
 
         # rotate
-        self.image = pygame.transform.rotate(self.image, -180*self.direction/math.pi)
+        self.image = pygame.transform.rotate(self.image, -180*direction/math.pi)
 
         # Move
-        self.fpvx = math.cos(self.direction) * self.speed
-        self.fpvy = math.sin(self.direction) * self.speed
-        self.fpx += self.fpvx
-        self.fpy += self.fpvy
+        fpvx = math.cos(direction) * self.speed
+        fpvy = math.sin(direction) * self.speed
+        self.fpx += fpvx
+        self.fpy += fpvy
         self.rect.x = int(self.fpx)
         self.rect.y = int(self.fpy)
 
@@ -737,8 +822,6 @@ class BigEColi(pygame.sprite.Sprite):
         # Calculate speed
         self.fpx = float(self.rect.center[0])
         self.fpy = float(self.rect.center[1])
-        self.fpvx = 0
-        self.fpvy = 0
 
         # 終点の角度を計算
         self.target = self.point1
@@ -785,10 +868,6 @@ class HeartMark(pygame.sprite.Sprite):
     """Life remains"""
 
     animecycle = 1
-    frame = 0
-    
-    destroyed = False
-    destroy_frame = 0
     destroy_limit = 60
 
     def __init__(self, pos):
@@ -799,7 +878,11 @@ class HeartMark(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = pos
 
+        self.frame = 0
         self.max_frame = len(self.images) * self.animecycle  # a frame to rewind
+
+        self.destroyed = False
+        self.destroy_frame = 0
 
     def update(self):
         # Character Animation
@@ -812,9 +895,8 @@ class HeartMark(pygame.sprite.Sprite):
             if self.destroy_frame >= self.destroy_limit:
                 self.kill()
 
-            dummy_image = self.image.copy()
-            dummy_image.set_alpha(255*(1- self.destroy_frame/float(self.destroy_limit)))
-            self.image = dummy_image
+            self.image = self.image.copy()
+            self.image.set_alpha(255*(1- self.destroy_frame/float(self.destroy_limit)))
 
             self.destroy_frame += 1
 
@@ -825,7 +907,7 @@ class Explosion(pygame.sprite.Sprite):
     """Explosion effect"""
 
     animecycle = 2  # アニメーション速度
-    frame = 0L
+    max_frame = 16 * animecycle  # a frame to disappear  FIXME FIXME
 
     def __init__(self, pos):
         pygame.sprite.Sprite.__init__(self, self.containers)
@@ -835,7 +917,7 @@ class Explosion(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = pos
 
-        self.max_frame = len(self.images) * self.animecycle  # a frame to disappear
+        self.frame = 0
 
     def update(self):
         # Character Animation
@@ -850,11 +932,38 @@ class Explosion(pygame.sprite.Sprite):
 #########################################################################################
 
 
-class BackgroundGameover(pygame.sprite.Sprite):
+class GameoverDraw():
+
+    def __init__(self, gamedata):
+        self.gamedata = gamedata
+
+        self.bg_gameover = BackgroundGameover()
+        self.title = TitleGameover()
+        self.score = ScoreGameover()
+        self.pushspace = PushSpaceGameover()
+
+    def update(self):
+        self.bg_gameover.update()
+        self.title.update()
+        self.score.update()
+        self.pushspace.update()
+
+    def draw(self, screen):
+        # Background
+        screen.fill((255,255,255))
+        screen.blit(self.bg_gameover.image, (0,0))
+
+        # Foreground
+        screen.blit(self.title.image, (self.title.rect.x, self.title.rect.y))
+        screen.blit(self.score.image, (self.score.rect.x, self.score.rect.y))
+        screen.blit(self.pushspace.image, (self.pushspace.rect.x, self.pushspace.rect.y))
+
+
+class BackgroundGameover():
     """Background fades in when a player loses"""
 
     def __init__(self):
-        pygame.sprite.Sprite.__init__(self, self.containers)
+        self.image = self.loseimage
 
         self.rect = self.image.get_rect()
         self.rect.x = 0
@@ -894,7 +1003,7 @@ class BackgroundGameover(pygame.sprite.Sprite):
         self.image = newsurf
 
 
-class TitleGameover(StringBaseSprite):
+class TitleGameover(StringObjectBase):
 
     y = 100
     text = 'GAME OVER'
@@ -902,7 +1011,7 @@ class TitleGameover(StringBaseSprite):
     fontsize = 80
     
     def __init__(self):
-        StringBaseSprite.__init__(self)
+        StringObjectBase.__init__(self)
 
         self.original_image = self.image.copy()
         self.opaque = 10
@@ -919,7 +1028,7 @@ class TitleGameover(StringBaseSprite):
         set_transparency_to_surf(self.image, self.opaque)
 
 
-class ScoreGameover(StringBaseSprite):
+class ScoreGameover(StringObjectBase):
 
     y = 300
     text = 'Score: {0}'
@@ -927,7 +1036,7 @@ class ScoreGameover(StringBaseSprite):
     fontsize = 60
 
     def __init__(self):
-        StringBaseSprite.__init__(self)
+        StringObjectBase.__init__(self)
         self.opaque = 10
         self.speed = 2
 
@@ -957,12 +1066,6 @@ class PushSpaceGameover(PushSpaceOpening):
         self.opaque = 100
         self.speed = 7
         self.min_opaque = 55
-
-    def update(self):
-        if self.frame > 60:
-            PushSpaceOpening.update(self)
-        else:
-            self.frame += 1
 
             
 #########################################################################################
@@ -1025,6 +1128,7 @@ class HelpDraw():
 
     def hasclosed(self):
         return self.closed
+
 
 class BackgroundHelp():
 
@@ -1128,26 +1232,30 @@ class ContentsHelp():
 
     def update(self):
         if self.cover_help.isshowstate():
-            self.image = self.original_image.copy()
+            self.image = self.original_image
         else:
             self.image = pygame.Surface(SCR_RECT.size).convert_alpha()
             self.image.fill((0,0,0,0))
 
 
-class PushSpaceHelp(PushSpaceOpening):
+class PushSpaceHelp(StringObjectBase):
 
     y = 690
+    text = 'PUSH SPACE KEY'
     frame = 0
     color = (255, 255, 255)
+    fontsize = 40
 
     def __init__(self, cover_help):
-        PushSpaceOpening.__init__(self)
-        self.image = pygame.Surface((0, 0))
+        StringObjectBase.__init__(self)
+        self.original_image = self.image.copy()
+
         self.opaque = 0
         self.speed = 3
         self.min_opaque = 55
         self.max_opaque = 255
         self.frame = 0
+        self.blink = False
 
         self.cover_help = cover_help
 
@@ -1171,3 +1279,4 @@ class PushSpaceHelp(PushSpaceOpening):
             self.opaque += self.speed
             self.image = self.original_image.copy()
             set_transparency_to_surf(self.image, self.opaque)
+

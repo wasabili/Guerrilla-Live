@@ -9,6 +9,7 @@ import Numeric
 import Image
 import ImageFilter
 import time
+from collections import deque
 
 
 def load_image(filename, sprit=None, autotrans=False, colorkey=None):
@@ -50,6 +51,7 @@ def load_sound(filename):
     return pygame.mixer.Sound(filename)
 
 
+
 def set_transparency_to_surf(image, transparency):
     """make the image background truely transparence"""
 
@@ -57,15 +59,74 @@ def set_transparency_to_surf(image, transparency):
     pixels_alpha[...] = (pixels_alpha * (transparency / 255.0)).astype(Numeric.UInt8)
     del pixels_alpha
 
+########################################################################################
+#                   Recycle                                                            #
+########################################################################################
+
+recycled_ecolis = deque()
+recycled_shots = deque()
+
+def get_recycled_ecoli(pos):
+    """Recycle killed E.Colis"""
+
+    global recycled_ecolis
+
+    if recycled_ecolis:
+        ecoli = recycled_ecolis.pop()
+        ecoli.init(pos)
+        return ecoli
+    else:
+        return None
+
+
+def recycle_ecoli(ecoli):
+    """Recycle killed E.Colis"""
+
+    global recycled_ecolis
+
+    recycled_ecolis.append(ecoli)
+
+
+def get_recycled_shot(start, target):
+    """Recycle killed shot"""
+
+    global recycled_shots
+
+    if recycled_shots:
+        shot = recycled_shots.pop()
+        shot.init(start, target)
+        return shot
+    else:
+        return None
+
+
+def recycle_shot(shot):
+    """Recycle killed Shots"""
+
+    global recycled_shots
+
+    recycled_shots.append(shot)
+
+
+########################################################################################
+#                   GameData                                                           #
+########################################################################################
+
 
 class GameData(object):
     """Manage data while playing"""
 
+    WIN, LOSE = range(2)
+
     killed = 0
     bosslimit = sys.maxint
-    score = 0
 
-    def __init__(self, level, boss): # FIXME imp level
+    def __init__(self):
+        pass
+
+    def initlevel(self, level, boss):
+
+        self.result = self.LOSE
 
         if level == 0:
             self.killed = 0
@@ -73,6 +134,7 @@ class GameData(object):
             self.freq = 0.15
 
         self.set_boss(boss)
+
 
     def get_score(self):
         return self.killed*10

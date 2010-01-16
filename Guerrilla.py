@@ -8,7 +8,7 @@ import random
 import time
 
 from lib.constants  import *
-from lib.utils      import load_image, load_sound, set_transparency_to_surf, GameData
+from lib.utils      import load_image, load_sound, set_transparency_to_surf, GameData, recycle_ecoli, get_recycled_ecoli
 from lib.sprites    import *
 
 
@@ -32,12 +32,15 @@ class Guerrilla(object):
         # Initialize Game object
         self.init_game()
 
+        self.font = pygame.font.SysFont(None, 40) #FIXME
+
         # start mainloop
         clock = pygame.time.Clock()
         while True:
             clock.tick(60)
             self.update()
             self.draw(self._screen)
+            self.debug(self._screen, str(clock.get_fps()))  #FIXME
             pygame.display.update()
             self.key_handler()
             self.triggerstatechange()
@@ -48,40 +51,17 @@ class Guerrilla(object):
 
         # Init data
         self._pending_game_state = None
-
-        # state of a game
+        self.gamedata = GameData()
         self.game_state = CREDIT
 
         # Create sprite groups
         self.overall = pygame.sprite.RenderUpdates()
-        self.credit_all = pygame.sprite.Group()         # Credit screen
-        self.start_all = pygame.sprite.Group()          # Opening Screen
-        self.pre_select_all = pygame.sprite.Group()     # Select Highlights
-        self.select_all = pygame.sprite.Group()         # Select Screen
-        self.pre_gameover_all = pygame.sprite.Group()   # GameOver Backgrounds
-        self.gameover_all = pygame.sprite.Group()       # GameOver screen
         self.play_all = pygame.sprite.Group()           # Play screen
         self.ecolis = pygame.sprite.Group()             # E.Coli Group
         self.shots = pygame.sprite.Group()              # Beam Group
         self.bosses = pygame.sprite.Group()             # Bosses Group
 
         # Assign default sprite groups
-        AuthorCredit.containers = self.overall, self.credit_all
-
-        TitleOpening.containers = self.overall, self.start_all
-        PushSpaceOpening.containers = self.overall, self.start_all
-
-        ArcadeSelect.containers = self.overall, self.select_all
-        LevelSelect.containers = self.overall, self.select_all
-        HelpSelect.containers = self.overall, self.select_all
-        SidebarSelect.containers = self.overall, self.select_all
-        HighlightSelect.containers = self.overall, self.pre_select_all
-
-        TitleGameover.containers = self.overall, self.gameover_all
-        ScoreGameover.containers = self.overall, self.gameover_all
-        PushSpaceGameover.containers = self.overall, self.gameover_all
-        BackgroundGameover.containers = self.overall, self.pre_gameover_all #FIXME
-
         Player.containers = self.overall, self.play_all
         EColi.containers = self.overall, self.play_all, self.ecolis
         BigEColi.containers = self.overall, self.play_all, self.bosses
@@ -90,55 +70,30 @@ class Guerrilla(object):
         HeartMark.containers = self.overall, self.play_all
 
 
-        # Credit Objects
-        self.auther = AuthorCredit() #FIXME
+        # Drawing Objects
+        self.creditdraw = CreditDraw()                      # Credit Objects #FIXME destroy when it is not needed
+        self.startdraw = StartDraw()                        # Start Objects
+        self.selectdraw = SelectDraw()                      # Select Objects
 
-        # Start Objects
-        self.bg_start = BackgroundStart()
-        TitleOpening() #FIXME
-        PushSpaceOpening() #FIXME
-
-        # Select Objects
-        self.bg_select = BackgroundSelect()
-        ArcadeSelect()
-        LevelSelect(1)
-        LevelSelect(2)
-        LevelSelect(3)
-        LevelSelect(4)
-        LevelSelect(5)
-        HelpSelect()
-        sidebar = SidebarSelect2() #FIXME
-        self.highlight = HighlightSelect(sidebar)
-        self.ef_select = EffectSelect()
-
-        # Play Objects
         self.player = Player()  # own ship
         self.bg_playing = BackgroundPlaying()  #FIXME
 
-        # GameOver Objects
-        TitleGameover()
-        ScoreGameover()
-        PushSpaceGameover()
-        BackgroundGameover()
-
-        # Recycle box
-        self.recycled_ecolis = []
+        self.gameoverdraw = GameoverDraw(self.gamedata)     # GameOver Objects
 
 
     def update(self):
         """Update state of a game"""
 
         if self.game_state == CREDIT:
-            self.credit_all.update()
-            if self.auther.havefinished():
+            self.creditdraw.update()
+            if self.creditdraw.hasfinished():
                 self.pendingchangestate(START)
 
         elif self.game_state == START:
-            self.start_all.update()
+            self.startdraw.update()
 
         elif self.game_state == SELECT:
-            self.pre_select_all.update()
-            self.select_all.update()
+            self.selectdraw.update()
 
         elif self.game_state == PLAY:
             self.play_all.update()
@@ -150,12 +105,8 @@ class Guerrilla(object):
             self.play_all.update()
             self.collision_detection()
 
-        elif self.game_state == GAMEEND:
-            ScoreGameover.score = self.gamedata.get_score()
-
         elif self.game_state == GAMEOVER:
-            self.pre_gameover_all.update()  #FIXME
-            self.gameover_all.update()
+            self.gameoverdraw.update()
 
         elif self.game_state == HELP:
             if self.helpdraw.hasclosed():
@@ -167,18 +118,13 @@ class Guerrilla(object):
         """Draw game"""
 
         if self.game_state == CREDIT:
-            screen.fill((0,0,0))
-            self.credit_all.draw(screen)
+            self.creditdraw.draw(screen)
 
         elif self.game_state == START:          # start
-            self.bg_start.draw(screen)              # Background
-            self.start_all.draw(screen)
+            self.startdraw.draw(screen)
 
         elif self.game_state == SELECT:         # select
-            self.bg_select.draw(screen)             # Background
-            self.pre_select_all.draw(screen)
-            self.select_all.draw(screen)
-            self.ef_select.draw(screen)
+            self.selectdraw.draw(screen)
 
         elif self.game_state == PLAY:           # playing
             self.bg_playing.draw(screen)            # Background
@@ -188,13 +134,8 @@ class Guerrilla(object):
             self.bg_playing.draw(screen)
             self.play_all.draw(screen)
 
-        elif self.game_state == GAMEEND:    # moratorium after gameover
-            BackgroundGameover.lastgame_image = screen.copy()
-            self.pendingchangestate(GAMEOVER)
-
         elif self.game_state == GAMEOVER:   # game over
-            self.pre_gameover_all.draw(screen)         # Background
-            self.gameover_all.draw(screen)
+            self.gameoverdraw.draw(screen)
 
         elif self.game_state == HELP:
             self.helpdraw.draw(screen)
@@ -237,8 +178,8 @@ class Guerrilla(object):
         # Between E.Colis and shots
         ecoli_collided = pygame.sprite.groupcollide(self.ecolis, self.shots, True, True)
         for ecoli in ecoli_collided.keys():
-            self.recycle_ecoli(ecoli)
-            EColi.kill_sound.play() #FIXME
+            recycle_ecoli(ecoli)
+            #EColi.kill_sound.play() #FIXME
             self.gamedata.killed += 1
             Explosion(ecoli.rect.center)  # Draw explosion
 
@@ -249,7 +190,7 @@ class Guerrilla(object):
                 #Player.bomb_sound.play()  #FIXME
                 pass
             if not self.player.killed_once(): # die once
-                self.pendingchangestate(GAMEEND)  # Game Over
+                self.entergameover(False)  # Game Over
 
 
         if self.game_state == PLAYBOSS:
@@ -260,28 +201,34 @@ class Guerrilla(object):
                 #BigEColi.hit_sound.play() FIXME
                 Explosion(shot.rect.center)  # Draw explosion
                 if not self.boss.hit_once():
-                    self.pendingchangestate(GAMEEND)
+                    self.entergameover(True)
         
             # Between player and Boss
             player_collided = pygame.sprite.spritecollide(self.player, self.bosses, False)
             if player_collided:  # If there is an E.Coli that touched player 
                 if not self.player.is_invincible():
-                    Player.bomb_sound.play()
+                    #Player.bomb_sound.play() #FIXME
+                    pass
                 if not self.player.killed_once(): # die once
-                    self.pendingchangestate(GAMEEND)  # Game Over
+                    self.entergameover(False)  # Game Over
 
 
     def playnewgame(self):
         """Something is selected"""
 
-        index = self.highlight.get_index()
+        index = self.selectdraw.get_index()
         if index == 0:
-            self.gamedata = GameData(0, BigEColi)
+            self.gamedata.initlevel(0, BigEColi)
             self.pendingchangestate(PLAY)
         if index == 6:
             self.helpdraw = HelpDraw()
             self.pendingchangestate(HELP)
 
+    def entergameover(self, win=False):
+        self.gamedata.resule = GameData.WIN if win else GameData.LOSE
+        ScoreGameover.score = self.gamedata.get_score()
+        BackgroundGameover.lastgame_image = self._screen.copy()
+        self.pendingchangestate(GAMEOVER)
 
     def pendingchangestate(self, state):
         self._pending_game_state = state
@@ -311,23 +258,7 @@ class Guerrilla(object):
                 x = 0
                 y = pos - (WIDTH*2+HEIGHT)
 
-            self.gen_ecoli((x, y))
-
-
-    def gen_ecoli(self, pos):
-        """Recycle killed E.Colis or create newly"""
-
-        if not len(self.recycled_ecolis):
-            return EColi(pos)
-        else:
-            ecoli = self.recycled_ecolis.pop()
-            ecoli.init(pos)
-            return ecoli
-
-    def recycle_ecoli(self, ecoli):
-        """Recycle killed E.Colis"""
-
-        self.recycled_ecolis.append(ecoli)
+            get_recycled_ecoli((x, y)) or EColi((x,y))
 
 
     def bosslimitbroke(self):
@@ -358,7 +289,7 @@ class Guerrilla(object):
 
         # Register images into sprites
         Player.images = load_image("player.png", 100, autotrans=True)
-        Shot.image = load_image("shot.png")
+        Shot.shot_image = load_image("shot.png")
         EColi.images = load_image("ecolis.png", 3, autotrans=True)
         BigEColi.image = load_image("big-ecoli.png")  #FIXME FIXME
         Explosion.images = load_image("explosion.png", 16, autotrans=True)
@@ -376,7 +307,8 @@ class Guerrilla(object):
         BackgroundStart.image = load_image("start.jpg")
         BackgroundSelect.image = load_image("select.jpg")
         BackgroundPlaying.image = load_image("play.jpg")
-        BackgroundGameover.image = load_image("lose.jpg")
+        BackgroundGameover.loseimage = load_image("lose.jpg")
+        BackgroundGameover.winimage = load_image("win.png")
 
 
     def load_sounds(self):
@@ -386,6 +318,10 @@ class Guerrilla(object):
         EColi.kill_sound = load_sound("kill.oga")
         Player.shot_sound = load_sound("shot.oga")
         Player.bomb_sound = load_sound("bomb.oga")
+
+
+    def debug(self, screen, txt):
+        screen.blit(self.font.render('debug: '+txt, False, (255,255,255)), (20,20))
 
 
 if __name__ == "__main__":
