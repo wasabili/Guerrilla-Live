@@ -617,7 +617,7 @@ class Player(pygame.sprite.Sprite):
                 self.reload_timer -= 1
             else:
                 # Shoot
-                # Player.shot_sound.play()  FIXME
+                #Player.shot_sound.play()  #FIXME
                 x, y = pygame.mouse.get_pos()
                 Shot(self.rect.center, (x,y))
                 self.reload_timer = self.reload_time

@@ -16,8 +16,8 @@ class Guerrilla(object):
 
     def __init__(self):
         # Initialize
-        pygame.mixer.pre_init(22050, -16, 2, 2048)
-        pygame.mixer.init(22050, -16, True, 2048)
+        pygame.mixer.pre_init(22050, -16, 2, 256)
+        pygame.mixer.init(22050, -16, True, 256)
         pygame.init()
 
         # make a window
@@ -238,7 +238,7 @@ class Guerrilla(object):
         ecoli_collided = pygame.sprite.groupcollide(self.ecolis, self.shots, True, True)
         for ecoli in ecoli_collided.keys():
             self.recycle_ecoli(ecoli)
-            # EColi.kill_sound.play() FIXME
+            EColi.kill_sound.play() #FIXME
             self.gamedata.killed += 1
             Explosion(ecoli.rect.center)  # Draw explosion
 
@@ -383,9 +383,9 @@ class Guerrilla(object):
         """Load sounds"""
 
         # Register sounds into sprites
-        EColi.kill_sound = load_sound("kill.ogg")
-        Player.shot_sound = load_sound("shot.ogg")
-        Player.bomb_sound = load_sound("bomb.wav")
+        EColi.kill_sound = load_sound("kill.oga")
+        Player.shot_sound = load_sound("shot.oga")
+        Player.bomb_sound = load_sound("bomb.oga")
 
 
 if __name__ == "__main__":
