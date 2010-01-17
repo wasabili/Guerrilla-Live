@@ -5,7 +5,7 @@ import pygame
 from pygame.locals import *
 import os
 import sys
-import Numeric
+import numpy
 import Image
 import ImageFilter
 import time
@@ -56,7 +56,7 @@ def set_transparency_to_surf(image, transparency):
     """make the image background truely transparence"""
 
     pixels_alpha = pygame.surfarray.pixels_alpha(image)
-    pixels_alpha[...] = (pixels_alpha * (transparency / 255.0)).astype(Numeric.UInt8)
+    pixels_alpha[...] = (pixels_alpha * (transparency / 255.0)).astype(numpy.uint8)
     del pixels_alpha
 
 ########################################################################################
@@ -76,7 +76,7 @@ def get_recycled_ecoli(pos):
         ecoli.init(pos)
         return ecoli
     else:
-        return None
+        return False
 
 
 def recycle_ecoli(ecoli):
@@ -97,7 +97,7 @@ def get_recycled_shot(start, target):
         shot.init(start, target)
         return shot
     else:
-        return None
+        return False
 
 
 def recycle_shot(shot):
