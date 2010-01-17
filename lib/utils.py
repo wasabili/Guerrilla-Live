@@ -6,13 +6,11 @@ from pygame.locals import *
 import os
 import sys
 import numpy
-import Image
-import ImageFilter
 import time
 from collections import deque
 
 
-def load_image(filename, sprit=None, autotrans=False, colorkey=None):
+def load_image(filename, sprit=None, colorkey=False):
     """画像をロードして画像と矩形を返す"""
     filename = os.path.join("data", filename)
     try:
@@ -20,16 +18,14 @@ def load_image(filename, sprit=None, autotrans=False, colorkey=None):
     except pygame.error, message:
         print "Cannot load image:", filename
         raise SystemExit, message
-    if autotrans:
-        if colorkey is None:
-            colorkey = image.get_at((0,0))
+    if colorkey:
+        colorkey = image.get_at((0,0))
         image.set_colorkey(colorkey, RLEACCEL)
-    image.convert_alpha()
     if sprit is not None:
-        return _split_image(image, sprit, autotrans)
+        return _split_image(image, sprit, colorkey)
     return image
 
-def _split_image(image, n, autotrans=False):
+def _split_image(image, n, colorkey=False):
     """横に長いイメージを同じ大きさのn枚のイメージに分割
     分割したイメージを格納したリストを返す"""
     image_list = []
@@ -37,11 +33,10 @@ def _split_image(image, n, autotrans=False):
     h = image.get_height()
     w1 = w / n
     for i in range(0, w, w1):
-        surface = pygame.Surface((w1,h))
+        surface = pygame.Surface((w1,h), image.get_flags())
         surface.blit(image, (0,0), (i,0,w1,h))
-        if autotrans:
+        if colorkey:
             surface.set_colorkey(surface.get_at((0,0)), RLEACCEL)
-        surface.convert_alpha()
         image_list.append(surface)
     return image_list
 
@@ -107,39 +102,5 @@ def recycle_shot(shot):
 
     recycled_shots.append(shot)
 
-
-########################################################################################
-#                   GameData                                                           #
-########################################################################################
-
-
-class GameData(object):
-    """Manage data while playing"""
-
-    WIN, LOSE = range(2)
-
-    killed = 0
-    bosslimit = sys.maxint
-
-    def __init__(self):
-        pass
-
-    def initlevel(self, level, boss):
-
-        self.result = self.LOSE
-
-        if level == 0:
-            self.killed = 0
-            self.bosslimit = 5
-            self.freq = 0.15
-
-        self.set_boss(boss)
-
-
-    def get_score(self):
-        return self.killed*10
-
-    def set_boss(self, boss):
-        self.boss = boss
 
 

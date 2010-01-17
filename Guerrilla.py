@@ -4,12 +4,10 @@
 import pygame
 from pygame.locals import *
 import sys
-import random
-import time
 
 from lib.constants  import *
-from lib.utils      import load_image, load_sound, set_transparency_to_surf, GameData, recycle_ecoli, get_recycled_ecoli
-from lib.sprites    import *
+from lib.utils      import load_image, load_sound
+from lib.objects    import *
 
 
 class Guerrilla(object):
@@ -54,31 +52,10 @@ class Guerrilla(object):
         self.gamedata = GameData()
         self.game_state = CREDIT
 
-        # Create sprite groups
-        self.overall = pygame.sprite.RenderUpdates()
-        self.play_all = pygame.sprite.Group()           # Play screen
-        self.ecolis = pygame.sprite.Group()             # E.Coli Group
-        self.shots = pygame.sprite.Group()              # Beam Group
-        self.bosses = pygame.sprite.Group()             # Bosses Group
-
-        # Assign default sprite groups
-        Player.containers = self.overall, self.play_all
-        EColi.containers = self.overall, self.play_all, self.ecolis
-        BigEColi.containers = self.overall, self.play_all, self.bosses
-        Shot.containers = self.overall, self.play_all, self.shots
-        Explosion.containers = self.overall, self.play_all
-        HeartMark.containers = self.overall, self.play_all
-
-
         # Drawing Objects
         self.creditdraw = CreditDraw()                      # Credit Objects #FIXME destroy when it is not needed
         self.startdraw = StartDraw()                        # Start Objects
         self.selectdraw = SelectDraw()                      # Select Objects
-
-        self.player = Player()  # own ship
-        self.bg_playing = BackgroundPlaying()  #FIXME
-
-        self.gameoverdraw = GameoverDraw(self.gamedata)     # GameOver Objects
 
 
     def update(self):
@@ -96,22 +73,18 @@ class Guerrilla(object):
             self.selectdraw.update()
 
         elif self.game_state == PLAY:
-            self.play_all.update()
-            self.gen_ecoli_randomly(self.gamedata.freq)  #FIXME
-            self.collision_detection()  # detect collision
-            self.bosslimitbroke() and self.enterbossbattle() # FIXME
-
-        elif self.game_state == PLAYBOSS:
-            self.play_all.update()
-            self.collision_detection()
+            self.playdraw.update()
+            if self.playdraw.hasfinished():
+                self.entergameover()
 
         elif self.game_state == GAMEOVER:
             self.gameoverdraw.update()
 
         elif self.game_state == HELP:
+            self.selectdraw.update()
+            self.helpdraw.update()
             if self.helpdraw.hasclosed():
                 self.pendingchangestate(SELECT)
-            self.helpdraw.update()
 
 
     def draw(self, screen):
@@ -126,19 +99,15 @@ class Guerrilla(object):
         elif self.game_state == SELECT:         # select
             self.selectdraw.draw(screen)
 
-        elif self.game_state == PLAY:           # playing
-            self.bg_playing.draw(screen)            # Background
-            self.play_all.draw(screen)
+        elif self.game_state == PLAY:           # play
+            self.playdraw.draw(screen)
 
-        elif self.game_state == PLAYBOSS:
-            self.bg_playing.draw(screen)
-            self.play_all.draw(screen)
-
-        elif self.game_state == GAMEOVER:   # game over
+        elif self.game_state == GAMEOVER:       # game over
             self.gameoverdraw.draw(screen)
 
         elif self.game_state == HELP:
             self.helpdraw.draw(screen)
+
 
     def key_handler(self):
         """Handle user event"""
@@ -155,7 +124,7 @@ class Guerrilla(object):
             elif event.type == KEYDOWN and event.key == K_F2:       # Fullscreen
                 self.togglefullscreen()
 
-            elif event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_RETURN):    # Hit Space
+            elif event.type == KEYDOWN and event.key in (K_SPACE, K_RETURN):    # Hit Space
 
                 if self.game_state == START:
                     self.pendingchangestate(SELECT)
@@ -172,64 +141,38 @@ class Guerrilla(object):
                         self.helpdraw.close()
 
 
-    def collision_detection(self):
-        """Detect collision"""
-
-        # Between E.Colis and shots
-        ecoli_collided = pygame.sprite.groupcollide(self.ecolis, self.shots, True, True)
-        for ecoli in ecoli_collided.keys():
-            recycle_ecoli(ecoli)
-            #EColi.kill_sound.play() #FIXME
-            self.gamedata.killed += 1
-            Explosion(ecoli.rect.center)  # Draw explosion
-
-        # Between player and E.Colis
-        player_collided = pygame.sprite.spritecollide(self.player, self.ecolis, True)
-        if player_collided:  # If there is an E.Coli that touched player 
-            if not self.player.is_invincible():
-                #Player.bomb_sound.play()  #FIXME
-                pass
-            if not self.player.killed_once(): # die once
-                self.entergameover(False)  # Game Over
-
-
-        if self.game_state == PLAYBOSS:
-
-            # Between Boss and shots
-            shot_collided = pygame.sprite.spritecollide(self.boss, self.shots, True)
-            for shot in shot_collided:
-                #BigEColi.hit_sound.play() FIXME
-                Explosion(shot.rect.center)  # Draw explosion
-                if not self.boss.hit_once():
-                    self.entergameover(True)
-        
-            # Between player and Boss
-            player_collided = pygame.sprite.spritecollide(self.player, self.bosses, False)
-            if player_collided:  # If there is an E.Coli that touched player 
-                if not self.player.is_invincible():
-                    #Player.bomb_sound.play() #FIXME
-                    pass
-                if not self.player.killed_once(): # die once
-                    self.entergameover(False)  # Game Over
-
-
     def playnewgame(self):
         """Something is selected"""
 
         index = self.selectdraw.get_index()
         if index == 0:
-            self.gamedata.initlevel(0, BigEColi)
+            pass
+        elif index == 1:
+            self.gamedata.initlevel(1)
+            self.playdraw = PlayDraw(self.gamedata)
             self.pendingchangestate(PLAY)
-        if index == 6:
+        elif index == 2:
+            self.gamedata.initlevel(2)
+            self.playdraw = PlayDraw(self.gamedata)
+            self.pendingchangestate(PLAY)
+        elif index == 3:
+            pass
+        elif index == 4:
+            pass
+        elif index == 5:
+            pass
+        elif index == 6:
             self.helpdraw = HelpDraw()
             self.pendingchangestate(HELP)
 
+
     def entergameover(self, win=False):
-        self.gamedata.resule = GameData.WIN if win else GameData.LOSE
-        ScoreGameover.score = self.gamedata.get_score()
-        BackgroundGameover.lastgame_image = self._screen.copy()
+        """prepare to enter gameover screen"""
+
+        self.gamedata.set_lastscreen(self._screen.copy())
+        self.gameoverdraw = GameoverDraw(self.gamedata)
         self.pendingchangestate(GAMEOVER)
-        self.gameoverdraw.set_result(win)
+
 
     def pendingchangestate(self, state):
         self._pending_game_state = state
@@ -240,39 +183,6 @@ class Guerrilla(object):
         else:
             self.game_state = self._pending_game_state
             self._pending_game_state = None
-
-    def gen_ecoli_randomly(self, freq):
-        """Create E.Colis randomly"""
-
-        if int(random.random()*(1/freq)) == 0:
-            pos = random.random()*(WIDTH+HEIGHT)*2
-            if pos < WIDTH:
-                x = pos
-                y = 0
-            elif pos < WIDTH+HEIGHT:
-                x = WIDTH
-                y = pos - x
-            elif pos < WIDTH*2+HEIGHT:
-                x = pos - (WIDTH+HEIGHT)
-                y = HEIGHT
-            else:
-                x = 0
-                y = pos - (WIDTH*2+HEIGHT)
-
-            get_recycled_ecoli((x, y)) or EColi((x,y))
-
-
-    def bosslimitbroke(self):
-        """Whether a player killed enough E.Colis to enter Boss Battle"""
-
-        return self.gamedata.killed >= self.gamedata.bosslimit
-
-
-    def enterbossbattle(self):
-        """Enter boss battle"""
-
-        self.boss = self.gamedata.boss()
-        self.pendingchangestate(PLAYBOSS)
 
 
     def togglefullscreen(self):
@@ -285,20 +195,22 @@ class Guerrilla(object):
 
         self.fullscreen = not self.fullscreen
 
+
     def load_images(self):
         """Load images"""
 
         # Register images into sprites
-        Player.images = load_image("player.png", 100, autotrans=True)
+        Player.images = load_image("player3.png", 480)
         Shot.shot_image = load_image("shot.png")
-        EColi.images = load_image("ecolis.png", 3, autotrans=True)
+        EColi.images = load_image("ecoli.png", 3)
+        EColi2.image = load_image("ecoli2.png")
         BigEColi.image = load_image("big-ecoli.png")  #FIXME FIXME
-        Explosion.images = load_image("explosion.png", 16, autotrans=True)
-        HeartMark.images = load_image("heart-animation.png", 96, autotrans=True)
+        Explosion.images = load_image("explosion.png", 16, colorkey=True)
+        HeartMark.images = load_image("heart-animation.png", 96)
 
-        TitleOpening.image = load_image("logo.png")
+        TitleStart.image = load_image("logo.png")
         HighlightSelect.image = load_image("highlight.png")
-        SidebarSelect.images = load_image("sidebar.png", 7)
+        SidebarSelect.images = load_image("sidebar.jpg", 7)
         SidebarSelect.mask = load_image("mask.png")  # FIXME FIXME
 
         BackgroundHelp.images = load_image('help.png', 10)
@@ -307,9 +219,9 @@ class Guerrilla(object):
         # Load background
         BackgroundStart.image = load_image("start.jpg")
         BackgroundSelect.image = load_image("select.jpg")
-        BackgroundPlaying.image = load_image("play.jpg")
+        BackgroundPlay.image = load_image("play.jpg")
         BackgroundGameover.loseimage = load_image("lose.jpg")
-        BackgroundGameover.winimage = load_image("win.png")
+        BackgroundGameover.winimage = load_image("win.jpg")
 
 
     def load_sounds(self):
@@ -323,6 +235,54 @@ class Guerrilla(object):
 
     def debug(self, screen, txt):
         screen.blit(self.font.render('debug: '+txt, False, (255,255,255)), (20,20))
+
+
+
+class GameData(object):
+    """Manage data while playing"""
+
+    WIN, LOSE = range(2)
+
+    killed = 0
+    bosslimit = sys.maxint
+
+    def __init__(self):
+        pass
+
+    def initlevel(self, level):
+
+        self.result = self.LOSE
+        self.lastscreen = None
+
+        if level == 1:
+            self.killed = 0
+            self.bosslimit = 100
+            self.enemies = [
+                (EColi, 0.05, 0.0)
+            ]
+            self.boss = BigEColi
+
+        if level == 2:
+            self.killed = 0
+            self.bosslimit = 300
+            self.enemies = [
+                (EColi, 0.10, 0.03),
+                (EColi2, 0.05, 0.01)
+            ]
+            self.boss = BigEColi #FIXME
+
+    def get_score(self):    #FIXME
+        return self.killed*10
+
+    def is_bosslimit_broken(self):  #FIXME
+        return self.killed >= self.bosslimit
+
+    def set_lastscreen(self, surface):
+        self.lastscreen = surface
+
+    def get_lastscreen(self):
+        return self.lastscreen
+
 
 
 if __name__ == "__main__":
