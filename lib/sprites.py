@@ -574,7 +574,7 @@ class Player(pygame.sprite.Sprite):
     accel = 0.15
     dynamic_fc = 0.05
     max_speed = 4
-    # When the object is static, its friction coefficient is supposed to be 0
+    # When the object is static, its friction coefficient is 0
 
     reload_time = 5
     frame = 0L
@@ -959,6 +959,9 @@ class GameoverDraw():
         screen.blit(self.pushspace.image, (self.pushspace.rect.x, self.pushspace.rect.y))
 
 
+    def set_result(self, result):
+        self.bg_gameover.switch_result(result)
+
 class BackgroundGameover():
     """Background fades in when a player loses"""
 
@@ -1002,6 +1005,11 @@ class BackgroundGameover():
 
         self.image = newsurf
 
+    def switch_result(self, win):
+        if win:
+            self.original_image = self.winimage
+        else:
+            self.original_image = self.loseimage
 
 class TitleGameover(StringObjectBase):
 

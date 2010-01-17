@@ -229,6 +229,7 @@ class Guerrilla(object):
         ScoreGameover.score = self.gamedata.get_score()
         BackgroundGameover.lastgame_image = self._screen.copy()
         self.pendingchangestate(GAMEOVER)
+        self.gameoverdraw.set_result(win)
 
     def pendingchangestate(self, state):
         self._pending_game_state = state

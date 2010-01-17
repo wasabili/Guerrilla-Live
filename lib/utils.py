@@ -130,7 +130,7 @@ class GameData(object):
 
         if level == 0:
             self.killed = 0
-            self.bosslimit = 300
+            self.bosslimit = 5
             self.freq = 0.15
 
         self.set_boss(boss)
