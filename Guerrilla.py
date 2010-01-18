@@ -226,9 +226,15 @@ class Guerrilla(object):
     def load_sounds(self):
         """Load sounds"""
 
-        # BGM
-        pygame.mixer.music.load('data/resident_evil.ogg')
-        pygame.mixer.music.play(-1)
+#        # BGM FIXME
+#        pyglet.options['audio'] = ('alsa', 'openal', 'silent')
+#        self.mediaplayer = pyglet.media.Player()
+#        bgm = pyglet.media.load('data/resident_evil.wav', streaming=False)
+#        self.mediaplayer.queue(bgm)
+#        self.mediaplayer.play()
+#        self.mediaplayer.eos_action = pyglet.media.Player.EOS_LOOP
+#        pyglet.app.run()
+
 
         # Register sounds into sprites
         EColi.kill_sound = load_sound("kill.oga")

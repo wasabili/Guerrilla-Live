@@ -315,18 +315,36 @@ class Player(pygame.sprite.Sprite):
                 recycle_or_gen_object(Shot, self.rect.center, pygame.mouse.get_pos())
                 self.reload_timer = self.reload_time
 
+        elif mouse_pressed[2]:
+            if self.reload_timer > 0:  # Unable to shoot while reloading
+                self.reload_timer -= 1
+            else:
+                # Shoot
+                #Player.shot_sound.play()  #FIXME
+                TripleShot(self.rect.center, pygame.mouse.get_pos())
+                self.reload_timer = self.reload_time
+
+
+#########################################################################################
+#                     WEAPONS                                                           #
+#########################################################################################
+
 
 class Shot(pygame.sprite.Sprite):
     """プレイヤーが発射するビーム"""
 
     speed = 9  # 移動速度
 
-    def __init__(self, start, target):
+    def __init__(self, start, target=None, degree=None):
         pygame.sprite.Sprite.__init__(self, self.containers)
 
         # Rotate image
-        direction = math.atan2(target[1]-start[1], target[0]-start[0])
-        self.image = pygame.transform.rotate(self.shot_image, -180*direction/math.pi)
+        if degree is None:
+            direction = math.atan2(target[1]-start[1], target[0]-start[0])
+            self.image = pygame.transform.rotate(self.shot_image, -180*direction/math.pi)
+        else:
+            direction = -degree*math.pi/180.0
+            self.image = pygame.transform.rotate(self.shot_image, degree)
 
         self.rect = self.image.get_rect()
         self.rect.center = start
@@ -336,10 +354,14 @@ class Shot(pygame.sprite.Sprite):
         self.fpvx = math.cos(direction) * self.speed
         self.fpvy = math.sin(direction) * self.speed
 
-    def init(self, start, target):
+    def init(self, start, target=None, degree=None):
         # Rotate image
-        direction = math.atan2(target[1]-start[1], target[0]-start[0])
-        self.image = pygame.transform.rotate(self.shot_image, -180*direction/math.pi)
+        if degree is None:
+            direction = math.atan2(target[1]-start[1], target[0]-start[0])
+            self.image = pygame.transform.rotate(self.shot_image, -180*direction/math.pi)
+        else:
+            direction = -degree*math.pi/180.0
+            self.image = pygame.transform.rotate(self.shot_image, degree)
 
         self.rect = self.image.get_rect()
         self.rect.center = start
@@ -366,6 +388,18 @@ class Shot(pygame.sprite.Sprite):
     def kill(self):
         pygame.sprite.Sprite.kill(self)
         self.__class__.recyclebox.append(self)
+
+
+class TripleShot():
+    """プレイヤーが発射するビーム"""
+
+    def __init__(self, start, target):
+        direction = math.atan2(target[1]-start[1], target[0]-start[0])
+        degree = -180*direction/math.pi
+        recycle_or_gen_object(Shot, start, None, degree)
+        recycle_or_gen_object(Shot, start, None, degree+120 if degree+120<180 else degree-240)
+        recycle_or_gen_object(Shot, start, None, degree+240 if degree+240<180 else degree-120)
+        
 
 class EColi(pygame.sprite.Sprite):
     """E.Coli"""

@@ -45,7 +45,6 @@ def load_sound(filename):
     return pygame.mixer.Sound(filename)
 
 
-
 def set_transparency_to_surf(image, transparency):
     """make the image background truely transparence"""
 
