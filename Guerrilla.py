@@ -14,8 +14,8 @@ class Guerrilla(object):
 
     def __init__(self):
         # Initialize
-        pygame.mixer.pre_init(22050, -16, 2, 256)
-        pygame.mixer.init(22050, -16, True, 256)
+        pygame.mixer.pre_init(22050, -16, 2, 0)
+        pygame.mixer.init(22050, -16, True, 0)
         pygame.init()
 
         # make a window
@@ -37,9 +37,12 @@ class Guerrilla(object):
         while True:
             clock.tick(60)
             self.update()
-            self.draw(self._screen)
+            dirty = self.draw(self._screen)
             self.debug(self._screen, str(clock.get_fps()))  #FIXME
-            pygame.display.update()
+            if dirty is None:
+                pygame.display.flip()
+            else:
+                pygame.display.update(dirty)
             self.key_handler()
             self.triggerstatechange()
 
@@ -50,7 +53,7 @@ class Guerrilla(object):
         # Init data
         self._pending_game_state = None
         self.gamedata = GameData()
-        self.game_state = CREDIT #FIXME FIXME
+        self.game_state = START #FIXME FIXME
 
         # Drawing Objects
         self.creditdraw = CreditDraw()                      # Credit Objects #FIXME destroy when it is not needed
@@ -91,22 +94,24 @@ class Guerrilla(object):
         """Draw game"""
 
         if self.game_state == CREDIT:
-            self.creditdraw.draw(screen)
+            drawer = self.creditdraw
 
         elif self.game_state == START:          # start
-            self.startdraw.draw(screen)
+            drawer = self.startdraw
 
         elif self.game_state == SELECT:         # select
-            self.selectdraw.draw(screen)
+            drawer = self.selectdraw
 
         elif self.game_state == PLAY:           # play
-            self.playdraw.draw(screen)
+            drawer = self.playdraw
 
         elif self.game_state == GAMEOVER:       # game over
-            self.gameoverdraw.draw(screen)
+            drawer = self.gameoverdraw
 
         elif self.game_state == HELP:
-            self.helpdraw.draw(screen)
+            drawer = self.helpdraw
+
+        return drawer.draw(screen)
 
 
     def key_handler(self):
@@ -209,6 +214,7 @@ class Guerrilla(object):
         HeartMark.images = load_image("heart-animation.png", 96)
 
         TitleStart.image = load_image("logo.png")
+        DescriptionSelect.images = load_image("description.png", 7)  #FIXME
         HighlightSelect.image = load_image("highlight.png")
         SidebarSelect.images = load_image("sidebar.jpg", 7)
 
@@ -218,6 +224,7 @@ class Guerrilla(object):
         # Load background
         BackgroundStart.image = load_image("start.jpg")
         BackgroundSelect.image = load_image("select.jpg")
+        BackgroundDescription.image = load_image("description-bg.png")
         BackgroundPlay.images = load_image("play.jpg", 2)
         BackgroundGameover.loseimage = load_image("lose.jpg")
         BackgroundGameover.winimage = load_image("win.jpg")
@@ -235,6 +242,8 @@ class Guerrilla(object):
 #        self.mediaplayer.eos_action = pyglet.media.Player.EOS_LOOP
 #        pyglet.app.run()
 
+        #pygame.mixer.music.load('data/resident_evil.wav')
+        #pygame.mixer.music.play(-1)
 
         # Register sounds into sprites
         EColi.kill_sound = load_sound("kill.oga")

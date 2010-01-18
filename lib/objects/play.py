@@ -399,6 +399,7 @@ class TripleShot():
         recycle_or_gen_object(Shot, start, None, degree)
         recycle_or_gen_object(Shot, start, None, degree+120 if degree+120<180 else degree-240)
         recycle_or_gen_object(Shot, start, None, degree+240 if degree+240<180 else degree-120)
+        del self
         
 
 class EColi(pygame.sprite.Sprite):
