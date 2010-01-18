@@ -50,7 +50,7 @@ class Guerrilla(object):
         # Init data
         self._pending_game_state = None
         self.gamedata = GameData()
-        self.game_state = CREDIT
+        self.game_state = CREDIT #FIXME FIXME
 
         # Drawing Objects
         self.creditdraw = CreditDraw()                      # Credit Objects #FIXME destroy when it is not needed
@@ -225,6 +225,10 @@ class Guerrilla(object):
 
     def load_sounds(self):
         """Load sounds"""
+
+        # BGM
+        pygame.mixer.music.load('data/resident_evil.ogg')
+        pygame.mixer.music.play(-1)
 
         # Register sounds into sprites
         EColi.kill_sound = load_sound("kill.oga")

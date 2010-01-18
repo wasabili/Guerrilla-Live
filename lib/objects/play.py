@@ -5,12 +5,11 @@ import pygame
 from pygame.locals import *
 import math
 import random
+from collections    import deque
 
 from lib.constants  import *
-from lib.utils      import set_transparency_to_surf, get_recycled_ecoli, recycle_ecoli, get_recycled_shot, recycle_shot
+from lib.utils      import *
 from base           import *
-
-player_pos = (0, 0)
 
 
 #########################################################################################
@@ -18,12 +17,35 @@ player_pos = (0, 0)
 #########################################################################################
 
 
+player_pos = (0, 0)
+
+
+def recycle_or_gen_object(obj, *options):
+    """If possible, salvage recycled object"""
+
+    print obj, options
+
+    if obj.recyclebox:
+        newobj = obj.recyclebox.pop()
+        if options:
+            newobj.init(*options)
+        else:
+            newobj.init()
+
+    else:
+        if options:
+            obj(*options)
+        else:
+            obj()
+
+
 class PlayDraw():
 
     def __init__(self, gamedata):
         # Create sprite groups
-        self.play_all = pygame.sprite.RenderUpdates()            # Play screen
-        self.enemies = pygame.sprite.Group()     # E.Coli Group
+        #self.play_all = pygame.sprite.RenderUpdates()            # Play screen
+        self.play_all = pygame.sprite.Group()                       # Play screen FIXME
+        self.enemies = pygame.sprite.Group()     # Enemy Group
         self.shots = pygame.sprite.Group()               # Beam Group
         self.bosses = pygame.sprite.Group()             # Bosses Group FIXME
 
@@ -35,6 +57,11 @@ class PlayDraw():
         Shot.containers = self.play_all, self.shots
         Explosion.containers = self.play_all
         HeartMark.containers = self.play_all
+
+        # Create recycle boxes
+        EColi.recyclebox = deque()
+        EColi2.recyclebox = deque()
+        Shot.recyclebox = deque()
 
         self.player = Player()
         self.bg_play = BackgroundPlay(gamedata.level)
@@ -55,7 +82,7 @@ class PlayDraw():
             for enemy, freq, subfreq in self.gamedata.enemies:
                 pos = self.gen_random_position(freq)
                 if pos is not None:
-                    enemy(pos)
+                    recycle_or_gen_object(enemy, pos)
 
             # enter to boss battle?
             if self.gamedata.is_bosslimit_broken():
@@ -66,7 +93,7 @@ class PlayDraw():
             for enemy, freq, subfreq in self.gamedata.enemies:
                 pos = self.gen_random_position(subfreq)
                 if pos is not None:
-                    enemy(pos)
+                    recycle_or_gen_object(enemy, pos)
 
             # player killed the boss?
             if not self.boss.alive():
@@ -107,21 +134,16 @@ class PlayDraw():
     def collision_detection(self):
         """Detect collision"""
 
-        # Between E.Colis and shots
+        # Between enemies and shots
         enemy_collided = pygame.sprite.groupcollide(self.enemies, self.shots, False, True)
         for enemy, shots in enemy_collided.items():
             #EColi.kill_sound.play() #FIXME
 
-            # Recycle Shots
-            for shot in shots:
-                recycle_shot(shot)
-
             # Bomb!
             if not enemy.hit_once():
-                #recycle_ecoli(ecoli)  #FIXME
-                enemy.kill()
-                self.gamedata.killed += 1 #FIXME
-                Explosion(shots[0].rect.center)  # Draw explosion
+                enemy.kill()                    # Kill an enemy
+                self.gamedata.killed += 1       # FIXME
+                Explosion(shots[0].rect.center) # Draw explosion
 
         # Between player and E.Colis
         player_collided = pygame.sprite.spritecollide(self.player, self.enemies, True)
@@ -290,7 +312,7 @@ class Player(pygame.sprite.Sprite):
             else:
                 # Shoot
                 #Player.shot_sound.play()  #FIXME
-                get_recycled_shot(self.rect.center, pygame.mouse.get_pos()) or Shot(self.rect.center, pygame.mouse.get_pos())
+                recycle_or_gen_object(Shot, self.rect.center, pygame.mouse.get_pos())
                 self.reload_timer = self.reload_time
 
 
@@ -302,31 +324,30 @@ class Shot(pygame.sprite.Sprite):
     def __init__(self, start, target):
         pygame.sprite.Sprite.__init__(self, self.containers)
 
-        self.rect = self.shot_image.get_rect()
+        # Rotate image
+        direction = math.atan2(target[1]-start[1], target[0]-start[0])
+        self.image = pygame.transform.rotate(self.shot_image, -180*direction/math.pi)
+
+        self.rect = self.image.get_rect()
         self.rect.center = start
         self.fpx = float(self.rect.x)
         self.fpy = float(self.rect.y)
 
-        # Calculate radian to the target
-        direction = math.atan2(target[1]-start[1], target[0]-start[0])
         self.fpvx = math.cos(direction) * self.speed
         self.fpvy = math.sin(direction) * self.speed
-
-        # Rotate image
-        self.image = pygame.transform.rotate(self.shot_image, -180*direction/math.pi)
 
     def init(self, start, target):
+        # Rotate image
+        direction = math.atan2(target[1]-start[1], target[0]-start[0])
+        self.image = pygame.transform.rotate(self.shot_image, -180*direction/math.pi)
+
+        self.rect = self.image.get_rect()
         self.rect.center = start
         self.fpx = float(self.rect.x)
         self.fpy = float(self.rect.y)
 
-        # Calculate radian to the target
-        direction = math.atan2(target[1]-start[1], target[0]-start[0])
         self.fpvx = math.cos(direction) * self.speed
         self.fpvy = math.sin(direction) * self.speed
-
-        # Rotate image
-        self.image = pygame.transform.rotate(self.shot_image, -180*direction/math.pi)
 
         # Reborn
         self.add(self.containers)
@@ -341,8 +362,10 @@ class Shot(pygame.sprite.Sprite):
         # 画面外に出たらオブジェクトを破棄
         if not SCR_RECT.contains(self.rect):
             self.kill()
-            recycle_shot(self)
 
+    def kill(self):
+        pygame.sprite.Sprite.kill(self)
+        self.__class__.recyclebox.append(self)
 
 class EColi(pygame.sprite.Sprite):
     """E.Coli"""
@@ -400,6 +423,11 @@ class EColi(pygame.sprite.Sprite):
         self.hp -= 1
         return self.hp > 0
 
+    def kill(self):
+        pygame.sprite.Sprite.kill(self)
+        self.__class__.recyclebox.append(self)
+
+
 class EColi2(pygame.sprite.Sprite):
     """E.Coli2"""
 
@@ -449,6 +477,10 @@ class EColi2(pygame.sprite.Sprite):
         # Player's shot hit me!
         self.hp -= 1
         return self.hp > 0
+
+    def kill(self):
+        pygame.sprite.Sprite.kill(self)
+        self.__class__.recyclebox.append(self)
 
 
 class BigEColi(pygame.sprite.Sprite):

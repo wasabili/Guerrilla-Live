@@ -7,7 +7,6 @@ import os
 import sys
 import numpy
 import time
-from collections import deque
 
 
 def load_image(filename, sprit=None, colorkey=False):
@@ -54,53 +53,6 @@ def set_transparency_to_surf(image, transparency):
     pixels_alpha[...] = (pixels_alpha * (transparency / 255.0)).astype(numpy.uint8)
     del pixels_alpha
 
-########################################################################################
-#                   Recycle                                                            #
-########################################################################################
-
-recycled_ecolis = deque()
-recycled_shots = deque()
-
-def get_recycled_ecoli(pos):
-    """Recycle killed E.Colis"""
-
-    global recycled_ecolis
-
-    if recycled_ecolis:
-        ecoli = recycled_ecolis.pop()
-        ecoli.init(pos)
-        return ecoli
-    else:
-        return False
-
-
-def recycle_ecoli(ecoli):
-    """Recycle killed E.Colis"""
-
-    global recycled_ecolis
-
-    recycled_ecolis.append(ecoli)
-
-
-def get_recycled_shot(start, target):
-    """Recycle killed shot"""
-
-    global recycled_shots
-
-    if recycled_shots:
-        shot = recycled_shots.pop()
-        shot.init(start, target)
-        return shot
-    else:
-        return False
-
-
-def recycle_shot(shot):
-    """Recycle killed Shots"""
-
-    global recycled_shots
-
-    recycled_shots.append(shot)
 
 
 
