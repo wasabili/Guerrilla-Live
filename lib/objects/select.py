@@ -260,13 +260,10 @@ class SidebarSelect2(SidebarSelect):
 
                 newsurf.blit(self.images[self.newindex], (0, 0))
  
-            newsurf.blit(self.mask, (0,0)) #FIXME 
             self.image = newsurf
  
         else:
-            #self.image = self.images[self.oldindex] #FIXME FIXME
-            self.image = self.images[self.oldindex].copy()
-            self.image.blit(self.mask, (0,0))
+            self.image = self.images[self.oldindex] #FIXME FIXME
 
 
 class EffectSelect():

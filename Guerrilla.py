@@ -166,7 +166,7 @@ class Guerrilla(object):
             self.pendingchangestate(HELP)
 
 
-    def entergameover(self, win=False):
+    def entergameover(self):
         """prepare to enter gameover screen"""
 
         self.gamedata.set_lastscreen(self._screen.copy())
@@ -205,13 +205,12 @@ class Guerrilla(object):
         EColi.images = load_image("ecoli.png", 3)
         EColi2.image = load_image("ecoli2.png")
         BigEColi.image = load_image("big-ecoli.png")  #FIXME FIXME
-        Explosion.images = load_image("explosion.png", 16, colorkey=True)
+        Explosion.images = load_image("explosion.png", 16)
         HeartMark.images = load_image("heart-animation.png", 96)
 
         TitleStart.image = load_image("logo.png")
         HighlightSelect.image = load_image("highlight.png")
         SidebarSelect.images = load_image("sidebar.jpg", 7)
-        SidebarSelect.mask = load_image("mask.png")  # FIXME FIXME
 
         BackgroundHelp.images = load_image('help.png', 10)
         ContentsHelp.image = load_image('help-contents.png')
@@ -219,7 +218,7 @@ class Guerrilla(object):
         # Load background
         BackgroundStart.image = load_image("start.jpg")
         BackgroundSelect.image = load_image("select.jpg")
-        BackgroundPlay.image = load_image("play.jpg")
+        BackgroundPlay.images = load_image("play.jpg", 2)
         BackgroundGameover.loseimage = load_image("lose.jpg")
         BackgroundGameover.winimage = load_image("win.jpg")
 
@@ -251,6 +250,7 @@ class GameData(object):
 
     def initlevel(self, level):
 
+        self.level = level
         self.result = self.LOSE
         self.lastscreen = None
 
