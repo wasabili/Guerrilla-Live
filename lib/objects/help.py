@@ -174,7 +174,7 @@ class ContentsHelp():
         if self.cover_help.isshowstate():
             self.image = self.original_image
         else:
-            self.image = pygame.Surface(SCR_RECT.size).convert_alpha()
+            self.image = pygame.Surface(SCR_RECT.size, SRCALPHA)
             self.image.fill((0,0,0,0))
 
 

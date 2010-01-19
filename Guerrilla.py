@@ -84,7 +84,7 @@ class Guerrilla(object):
             self.gameoverdraw.update()
 
         elif self.game_state == HELP:
-            self.selectdraw.update()
+            #self.selectdraw.update()  #FIXME
             self.helpdraw.update()
             if self.helpdraw.hasclosed():
                 self.pendingchangestate(SELECT)
@@ -216,7 +216,8 @@ class Guerrilla(object):
         TitleStart.image = load_image("logo.png")
         DescriptionSelect.images = load_image("description.png", 7)  #FIXME
         HighlightSelect.image = load_image("highlight.png")
-        SidebarSelect.images = load_image("sidebar.jpg", 7)
+        SidebarSelect.images = load_image("sidebar.jpg", 7)  #FIXME
+        SidebarSelect2.images = load_image("sidebar.jpg", 7)
 
         BackgroundHelp.images = load_image('help.png', 10)
         ContentsHelp.image = load_image('help-contents.png')
@@ -304,5 +305,9 @@ class GameData(object):
 
 
 
-if __name__ == "__main__":
+def main():
     Guerrilla()
+
+import cProfile as profile
+profile.run('main()')
+

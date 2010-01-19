@@ -30,7 +30,7 @@ class StringObjectBase():
         pass
 
 
-class StringSpriteBase(pygame.sprite.Sprite):
+class StringSpriteBase(pygame.sprite.DirtySprite):
 
     y = 0           # abstract
     x = None        # abstract
@@ -40,7 +40,7 @@ class StringSpriteBase(pygame.sprite.Sprite):
     color = (0,0,0) # abstract
 
     def __init__(self):
-        pygame.sprite.Sprite.__init__(self, self.containers)
+        pygame.sprite.DirtySprite.__init__(self, self.containers)
 
         self.font = pygame.font.SysFont(self.fontfamily, self.fontsize)
         self.image = self.font.render(self.text, True, self.color)

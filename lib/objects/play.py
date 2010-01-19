@@ -23,8 +23,6 @@ player_pos = (0, 0)
 def recycle_or_gen_object(obj, *options):
     """If possible, salvage recycled object"""
 
-    print obj, options
-
     if obj.recyclebox:
         newobj = obj.recyclebox.pop()
         if options:
@@ -43,25 +41,29 @@ class PlayDraw():
 
     def __init__(self, gamedata):
         # Create sprite groups
-        #self.play_all = pygame.sprite.RenderUpdates()            # Play screen
-        self.play_all = pygame.sprite.Group()                       # Play screen FIXME
-        self.enemies = pygame.sprite.Group()     # Enemy Group
-        self.shots = pygame.sprite.Group()               # Beam Group
-        self.bosses = pygame.sprite.Group()             # Bosses Group FIXME
+        self.play_all   = pygame.sprite.LayeredUpdates()           # Play screen
+        self.enemies    = pygame.sprite.Group()                   # Enemy Group
+        self.shots      = pygame.sprite.Group()                   # Beam Group
+        self.bosses     = pygame.sprite.Group()                   # Bosses Group
 
         # Assign default sprite groups
-        Player.containers = self.play_all
-        EColi.containers = self.play_all, self.enemies
-        EColi2.containers = self.play_all, self.enemies
-        BigEColi.containers = self.play_all, self.enemies, self.bosses
-        Shot.containers = self.play_all, self.shots
-        Explosion.containers = self.play_all
-        HeartMark.containers = self.play_all
+        Player.containers           = self.play_all
+        EColi.containers            = self.play_all, self.enemies
+        EColi2.containers           = self.play_all, self.enemies
+        BigEColi.containers         = self.play_all, self.enemies, self.bosses
+        Shot.containers             = self.play_all, self.shots
+        Explosion.containers        = self.play_all
+        HeartMark.containers        = self.play_all
 
         # Create recycle boxes
         EColi.recyclebox = deque()
         EColi2.recyclebox = deque()
         Shot.recyclebox = deque()
+
+        # Set Layer
+        Player._layer        = 100
+        HeartMark._layer     = 200
+        Explosion._layer     = 100
 
         self.player = Player()
         self.bg_play = BackgroundPlay(gamedata.level)
@@ -86,7 +88,7 @@ class PlayDraw():
 
             # enter to boss battle?
             if self.gamedata.is_bosslimit_broken():
-                self.boss = self.gamedata.boss()              #FIXME
+                self.boss = self.gamedata.boss()
 
         else:
             # Create new enemies
@@ -169,7 +171,7 @@ class BackgroundPlay():
         magged_size = (int(SCR_RECT.width*(1+self.mag)), int(SCR_RECT.height*(1+self.mag)))
 
         self.image = self.images[level-1]  # FIXME some images in one level
-        self.image = pygame.transform.scale(self.image, (magged_size[0], magged_size[1]))  #FIXME
+        self.image = pygame.transform.scale(self.image, (magged_size[0], magged_size[1]))
         self.rect = self.image.get_rect()
 
         self.startx = -magged_size[0]*(self.mag/(1+self.mag))/2.0
@@ -432,7 +434,7 @@ class EColi(pygame.sprite.Sprite):
 
     def update(self):
 
-        # キャラクターアニメーション FIXME
+        # Character Animation FIXME
         self.frame += 1
         self.image = self.images[self.frame/self.animecycle%len(self.images)]
 
@@ -554,8 +556,6 @@ class BigEColi(pygame.sprite.Sprite):
         # Calculate Angular Velocity
         self.av = self.speed/(2*math.pi*self.roundr/360.0)
 
-        print self.av
-
     def update(self):
 
         if self.animechap == 0:
@@ -627,7 +627,7 @@ class Explosion(pygame.sprite.Sprite):
     """Explosion effect"""
 
     animecycle = 2  # アニメーション速度
-    max_frame = 16 * animecycle  # a frame to disappear  FIXME FIXME
+    max_frame = 16 * animecycle  # a frame to disappear
 
     def __init__(self, pos):
         pygame.sprite.Sprite.__init__(self, self.containers)
