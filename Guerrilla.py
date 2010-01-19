@@ -14,7 +14,7 @@ class Guerrilla(object):
 
     def __init__(self):
         # Initialize
-        pygame.mixer.pre_init(22050, -16, 2, 0)
+        #pygame.mixer.pre_init(22050, -16, 2, 128)
         pygame.mixer.init(22050, -16, True, 0)
         pygame.init()
 
@@ -205,30 +205,31 @@ class Guerrilla(object):
         """Load images"""
 
         # Register images into sprites
-        Player.images = load_image("player3.png", 480)
-        Shot.shot_image = load_image("shot.png")
-        EColi.images = load_image("ecoli.png", 3)
-        EColi2.image = load_image("ecoli2.png")
-        BigEColi.image = load_image("big-ecoli.png")  #FIXME FIXME
-        Explosion.images = load_image("explosion.png", 16)
-        HeartMark.images = load_image("heart-animation.png", 96)
+        Player.images                   = load_image("player3.png", 480)
+        Shot.shot_image                 = load_image("shot.png")
+        EColi.images                    = load_image("ecoli.png", 3)
+        EColi2.image                    = load_image("ecoli2.png")
+        BigEColi.image                  = load_image("big-ecoli.png")  #FIXME FIXME
+        Explosion.images                = load_image("explosion.png", 16)
+        HeartMark.images                = load_image("heart-animation.png", 96)
+        Gage.image                      = load_image("gage.png")
 
-        TitleStart.image = load_image("logo.png")
-        DescriptionSelect.images = load_image("description.png", 7)  #FIXME
-        HighlightSelect.image = load_image("highlight.png")
-        SidebarSelect.images = load_image("sidebar.jpg", 7)  #FIXME
-        SidebarSelect2.images = load_image("sidebar.jpg", 7)
+        TitleStart.image                = load_image("logo.png")
+        DescriptionSelect.images        = load_image("description.png", 7)  #FIXME
+        HighlightSelect.image           = load_image("highlight.png")
+        SidebarSelect.images            = load_image("sidebar.jpg", 7)  #FIXME
+        SidebarSelect2.images           = load_image("sidebar.jpg", 7)
 
-        BackgroundHelp.images = load_image('help.png', 10)
-        ContentsHelp.image = load_image('help-contents.png')
+        BackgroundHelp.images           = load_image('help.png', 10)
+        ContentsHelp.image              = load_image('help-contents.png')
 
         # Load background
-        BackgroundStart.image = load_image("start.jpg")
-        BackgroundSelect.image = load_image("select.jpg")
-        BackgroundDescription.image = load_image("description-bg.png")
-        BackgroundPlay.images = load_image("play.jpg", 2)
-        BackgroundGameover.loseimage = load_image("lose.jpg")
-        BackgroundGameover.winimage = load_image("win.jpg")
+        BackgroundStart.image           = load_image("start.jpg")
+        BackgroundSelect.image          = load_image("select.jpg")
+        BackgroundDescription.image     = load_image("description-bg.png")
+        BackgroundPlay.images           = load_image("play.jpg", 2)
+        BackgroundGameover.loseimage    = load_image("lose.jpg")
+        BackgroundGameover.winimage     = load_image("win.jpg")
 
 
     def load_sounds(self):
@@ -243,8 +244,8 @@ class Guerrilla(object):
 #        self.mediaplayer.eos_action = pyglet.media.Player.EOS_LOOP
 #        pyglet.app.run()
 
-        #pygame.mixer.music.load('data/resident_evil.wav')
-        #pygame.mixer.music.play(-1)
+#        pygame.mixer.music.load('data/resident_evil.wav')
+#        pygame.mixer.music.play(-1)
 
         # Register sounds into sprites
         EColi.kill_sound = load_sound("kill.oga")
@@ -261,35 +262,49 @@ class GameData(object):
     """Manage data while playing"""
 
     WIN, LOSE = range(2)
+    SHOT, SUBSHOT = range(2)
 
     killed = 0
     bosslimit = sys.maxint
+    
+    subshot_timelimit = 300
 
     def __init__(self):
         pass
 
     def initlevel(self, level):
 
+        self.weapon_mode = self.SHOT
+
         self.level = level
         self.result = self.LOSE
         self.lastscreen = None
+        self.subshot_timer = 0
+        self.subshot_counter = 0
 
         if level == 1:
             self.killed = 0
-            self.bosslimit = 100
+            self.bosslimit = 450
             self.enemies = [
-                (EColi, 0.05, 0.0)
+                (EColi, 0.10, 0.05)
             ]
             self.boss = BigEColi
 
         if level == 2:
             self.killed = 0
-            self.bosslimit = 300
+            self.bosslimit = 800
             self.enemies = [
                 (EColi, 0.10, 0.03),
                 (EColi2, 0.05, 0.01)
             ]
             self.boss = BigEColi #FIXME
+
+    def killed_enemies(self, amount):
+        self.killed += amount
+        if self.weapon_mode == self.SUBSHOT:
+            self.subshot_counter = 0
+        else:
+            self.subshot_counter += amount
 
     def get_score(self):    #FIXME
         return self.killed*10

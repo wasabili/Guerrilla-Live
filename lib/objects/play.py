@@ -39,6 +39,8 @@ def recycle_or_gen_object(obj, *options):
 
 class PlayDraw():
 
+    shot_reload_time = 5
+
     def __init__(self, gamedata):
         # Create sprite groups
         self.play_all   = pygame.sprite.LayeredUpdates()           # Play screen
@@ -54,6 +56,7 @@ class PlayDraw():
         Shot.containers             = self.play_all, self.shots
         Explosion.containers        = self.play_all
         HeartMark.containers        = self.play_all
+        Gage.containers             = self.play_all
 
         # Create recycle boxes
         EColi.recyclebox = deque()
@@ -61,17 +64,22 @@ class PlayDraw():
         Shot.recyclebox = deque()
 
         # Set Layer
-        Player._layer        = 100
-        HeartMark._layer     = 200
-        Explosion._layer     = 100
+        Player._layer       = 100
+        HeartMark._layer    = 200
+        Explosion._layer    = 100
+        Gage._layer         = 200
+        GageMask._layer     = 300
 
         self.player = Player()
         self.bg_play = BackgroundPlay(gamedata.level)
+        self.gage = Gage(gamedata)
 
         self.gamedata = gamedata
         self.boss = None
         self.gameover = False
 
+        # Shot
+        self.shot_reload_timer = 5
 
     def update(self):
         self.bg_play.update()
@@ -79,6 +87,32 @@ class PlayDraw():
 
         self.collision_detection()  # detect collision
 
+        # Shoot a shot
+        mouse_pressed = pygame.mouse.get_pressed()
+        if mouse_pressed[0]:
+            # Normal Shot
+            if self.gamedata.weapon_mode == self.gamedata.SHOT:
+                if self.shot_reload_timer > 0:  # Unable to shoot while reloading
+                    self.shot_reload_timer -= 1
+                else:
+                    # Shoot
+                    #Player.shot_sound.play()  #FIXME
+                    recycle_or_gen_object(Shot, player_pos, pygame.mouse.get_pos())
+                    self.shot_reload_timer = self.shot_reload_time
+
+            # Sub-Shot
+            elif self.gamedata.weapon_mode == self.gamedata.SUBSHOT:
+                self.gamedata.subshot_timer -= 1
+                if self.shot_reload_timer > 0:  # Unable to shoot while reloading
+                    self.shot_reload_timer -= 1
+                else:
+                    # Shoot
+                    #Player.shot_sound.play()  #FIXME
+                    TripleShot(player_pos, pygame.mouse.get_pos())
+                    self.shot_reload_timer = self.shot_reload_time
+
+
+        # Generate enemies
         if self.boss is None:
             # Create new enemies
             for enemy, freq, subfreq in self.gamedata.enemies:
@@ -144,7 +178,7 @@ class PlayDraw():
             # Bomb!
             if not enemy.hit_once():
                 enemy.kill()                    # Kill an enemy
-                self.gamedata.killed += 1       # FIXME
+                self.gamedata.killed_enemies(1)       # FIXME
                 Explosion(shots[0].rect.center) # Draw explosion
 
         # Between player and E.Colis
@@ -194,7 +228,6 @@ class Player(pygame.sprite.Sprite):
     max_speed = 4
     # When the object is static, its friction coefficient is 0
 
-    reload_time = 5
     frame = 0L
     animecycle = 2
 
@@ -219,7 +252,6 @@ class Player(pygame.sprite.Sprite):
         self.fpvy = 0
 
         self.frame = 0L
-        self.reload_timer = 0
 
     def killed_once(self):
         """A player is killed once"""
@@ -306,25 +338,6 @@ class Player(pygame.sprite.Sprite):
 
         player_pos = self.rect.center
 
-        # Shoot a shot
-        mouse_pressed = pygame.mouse.get_pressed()
-        if mouse_pressed[0]:
-            if self.reload_timer > 0:  # Unable to shoot while reloading
-                self.reload_timer -= 1
-            else:
-                # Shoot
-                #Player.shot_sound.play()  #FIXME
-                recycle_or_gen_object(Shot, self.rect.center, pygame.mouse.get_pos())
-                self.reload_timer = self.reload_time
-
-        elif mouse_pressed[2]:
-            if self.reload_timer > 0:  # Unable to shoot while reloading
-                self.reload_timer -= 1
-            else:
-                # Shoot
-                #Player.shot_sound.play()  #FIXME
-                TripleShot(self.rect.center, pygame.mouse.get_pos())
-                self.reload_timer = self.reload_time
 
 
 #########################################################################################
@@ -647,4 +660,68 @@ class Explosion(pygame.sprite.Sprite):
             self.kill()  # disappear
 
 
+class Gage(pygame.sprite.Sprite):
+    """Score Gage"""
+
+    pos = (21, 705)
+
+    def __init__(self, gamedata):
+        pygame.sprite.Sprite.__init__(self, self.containers)
+
+        self.rect = self.image.get_rect()
+        self.rect.topleft = self.pos
+
+        GageMask.containers = self.containers
+        GageMask(gamedata, self.pos)
+
+    def update(self):
+        pass
+
+
+class GageMask(pygame.sprite.Sprite):
+
+    max_width = 387
+    max_height = 17
+
+    killedlimit = 100
+
+    def __init__(self, gamedata, pos):
+        pygame.sprite.Sprite.__init__(self, self.containers)
+
+        self.image = pygame.Surface((self.max_width, self.max_height))
+        self.image.fill((0,0,0))
+        self.none_image = pygame.Surface((0,0))
+        self.rect = self.image.get_rect()
+        self.rect.topright = (pos[0]+2+self.max_width, pos[1]+2)
+
+        self.topright = (pos[0]+2+self.max_width, pos[1]+2)
+        self.gamedata = gamedata
+
+    def update(self):
+
+        if self.gamedata.weapon_mode == self.gamedata.SHOT:
+
+            counter = self.gamedata.subshot_counter
+            if counter >= self.killedlimit:
+                self.image = self.none_image
+                pressed_keys = pygame.key.get_pressed()
+                if pressed_keys[K_SPACE]:
+                    self.gamedata.weapon_mode = self.gamedata.SUBSHOT
+                    self.gamedata.subshot_timer = self.gamedata.subshot_timelimit
+            else:
+                self.image = pygame.Surface((self.max_width*(1-float(counter)/self.killedlimit), self.max_height))
+                self.image.fill((0,0,0))
+                self.rect = self.image.get_rect()
+                self.rect.topright = self.topright
+
+        elif self.gamedata.weapon_mode == self.gamedata.SUBSHOT:
+
+            counter = self.gamedata.subshot_timer
+            self.image = pygame.Surface((self.max_width*(1-float(counter)/self.gamedata.subshot_timelimit), self.max_height))
+            self.image.fill((0,0,0))
+            self.rect = self.image.get_rect()
+            self.rect.topright = self.topright
+
+            if counter <= 0:
+                self.gamedata.weapon_mode = self.gamedata.SHOT
 
