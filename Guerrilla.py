@@ -14,7 +14,6 @@ class Guerrilla(object):
 
     def __init__(self):
         # Initialize
-        #pygame.mixer.pre_init(22050, -16, 2, 128)
         pygame.mixer.init(22050, -16, True, 0)
         pygame.init()
 
@@ -53,7 +52,7 @@ class Guerrilla(object):
         # Init data
         self._pending_game_state = None
         self.gamedata = GameData()
-        self.game_state = START #FIXME FIXME
+        self.game_state = CREDIT #FIXME FIXME
 
         # Drawing Objects
         self.creditdraw = CreditDraw()                      # Credit Objects #FIXME destroy when it is not needed
@@ -219,6 +218,7 @@ class Guerrilla(object):
         HighlightSelect.image           = load_image("highlight.png")
         SidebarSelect.images            = load_image("sidebar.jpg", 7)  #FIXME
         SidebarSelect2.images           = load_image("sidebar.jpg", 7)
+        SidebarSelect4.images           = load_image("sidebar.jpg", 7)
 
         BackgroundHelp.images           = load_image('help.png', 10)
         ContentsHelp.image              = load_image('help-contents.png')
@@ -284,7 +284,7 @@ class GameData(object):
 
         if level == 1:
             self.killed = 0
-            self.bosslimit = 450
+            self.bosslimit = 500
             self.enemies = [
                 (EColi, 0.10, 0.05)
             ]

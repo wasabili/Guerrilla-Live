@@ -25,7 +25,7 @@ class SelectDraw():
         #BackgroundSelect.containers         = self.select_all
         #BackgroundDescription.containers    = self.select_all
         DescriptionSelect.containers        = self.select_all
-        SidebarSelect2.containers           = self.select_all
+        SidebarSelect4.containers           = self.select_all
         HighlightSelect.containers          = self.select_all
         BlinkerSelect.containers            = self.select_all
         ArcadeSelect.containers             = self.select_all
@@ -33,10 +33,11 @@ class SelectDraw():
         HelpSelect.containers               = self.select_all
         EffectSelect.containers             = self.select_all
 
+        # Objects
         #self.bg_select = BackgroundSelect()
         #self.bg_description = BackgroundDescription()
         self.description = DescriptionSelect()
-        self.sidebar = SidebarSelect2()                     # FIXME
+        self.sidebar = SidebarSelect4()                     # FIXME
         self.blinker = BlinkerSelect()
         self.highlight = HighlightSelect(self.blinker, self.description, self.sidebar)
 
@@ -136,9 +137,6 @@ class HighlightSelect(pygame.sprite.DirtySprite):
     def __init__(self, blinker, description, sidebar):
         pygame.sprite.DirtySprite.__init__(self, self.containers)
 
-        self.font = pygame.font.SysFont(None, 80)
-        self.font_height = self.font.render('TEXT', True, (64,64,64)).get_height()
-
         self.rect = self.image.get_rect()
         self.rect.x = self.entrylist[0][0] + self.diffx
         self.rect.y = self.entrylist[0][1] + self.diffy
@@ -193,13 +191,11 @@ class BlinkerSelect(pygame.sprite.DirtySprite):
         pygame.sprite.DirtySprite.__init__(self, self.containers)
 
         # Create images
-        blinkimage = pygame.Surface((30, 50), SRCALPHA)
-        blinkimage.fill((128,128,128,128))
-        self.blinkimage_light = blinkimage.copy()
-        blinkimage.fill((128,128,128,0))
-        self.blinkimage_dark = blinkimage.copy()
+        self.blinkimage_light = pygame.Surface((30, 50), SRCALPHA|HWSURFACE)
+        self.blinkimage_light.fill((128,128,128,128))
+        self.blinkimage_none = pygame.Surface((0, 0), HWSURFACE)
 
-        self.rect = blinkimage.get_rect()
+        self.rect = self.blinkimage_light.get_rect()
         self.rect.center = (315, 294)
         self.frame = 0
 
@@ -208,7 +204,7 @@ class BlinkerSelect(pygame.sprite.DirtySprite):
         if self.frame/self.animecycle%2 == 0:
             self.image = self.blinkimage_light
         else:
-            self.image = self.blinkimage_dark
+            self.image = self.blinkimage_none
         self.frame += 1
 
     def change(self, index, up):
@@ -216,8 +212,6 @@ class BlinkerSelect(pygame.sprite.DirtySprite):
         corner = HighlightSelect.entrylist[index]
         self.rect.x = corner[0] + HighlightSelect.diffx + self.pos[0]
         self.rect.y = corner[1] + HighlightSelect.diffy + self.pos[1]
-
-
 
 
 class DescriptionSelect():
@@ -254,7 +248,7 @@ class DescriptionPartSelect(pygame.sprite.DirtySprite):
 
         self.image = image
         self.original_image = self.image.copy()
-        self.none_image = pygame.Surface((0,0), SRCALPHA)
+        self.none_image = pygame.Surface((0,0), SRCALPHA|HWSURFACE)
         self.rect = self.image.get_rect()
         self.rect.x = self.xstart
         self.rect.y = 35
@@ -388,7 +382,7 @@ class SidebarSelect2(pygame.sprite.DirtySprite):
  
         self.image = self.images[0].copy()
         self.rect = self.image.get_rect()
-        self.rect.center = (100, SCR_RECT.height/2)
+        self.rect.topleft = (-50, 0)
  
         self.oldindex = 0
         self.newindex = 0
@@ -398,13 +392,12 @@ class SidebarSelect2(pygame.sprite.DirtySprite):
         self.frame = 0
  
     def change(self, index, up):
-        self.oldindex = self.newindex
+        self.oldindex = self.newindex       # Sync
         self.newindex = index
-        self.opaque = 0      
+        self.opaque = 0
  
     def update(self):
  
-        self.dirty = 0
         if self.oldindex != self.newindex:              # Animation has not finished
             self.ditry = 1
 
@@ -415,7 +408,7 @@ class SidebarSelect2(pygame.sprite.DirtySprite):
                 self.image = self.images[self.oldindex].copy()
                 self.image.blit(dummy, (0, 0))
 
-                if self.opaque + self.speed > 255:
+                if self.opaque + self.speed >= 255:
                     self.opaque = 255
                 else:
                     self.opaque += self.speed
@@ -483,31 +476,90 @@ class SidebarPartSelect(pygame.sprite.DirtySprite):
                 self.opaque += self.speed
 
 
+class SidebarSelect4(pygame.sprite.DirtySprite):
+ 
+    speed = 5
+
+    def __init__(self):
+        pygame.sprite.DirtySprite.__init__(self, self.containers)
+ 
+        self.image = self.images[0].copy().convert_alpha()
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (-50, 0)
+ 
+        self.index = 0
+        self.remains = 0
+        self.up = False 
+
+        self.frames = int(255/self.speed)
+
+        self.sub_images = []
+        for i, image in enumerate(self.images):
+            for j in range(self.frames):
+                tmp = image.copy()
+                tmp.set_alpha(j*self.speed)
+                self.sub_images += [tmp]
+
+    def change(self, index, up):
+        self.up = up
+        self.index = index
+        self.remains = self.frames
+ 
+    def update(self):
+ 
+        if self.remains > 0 and not self.up:              # Animation has not finished
+            self.ditry = 1
+
+            i = self.frames-self.remains
+            j = self.index*self.frames+i
+            image = self.sub_images[j]
+            self.image.blit(image, (0,0))
+
+            self.remains -= 1
+
+        elif self.remains > 0 and self.up:
+            self.ditry = 1
+
+            i = self.frames-self.remains
+            j = self.index*self.frames+i
+            image = self.sub_images[j]
+            self.image.blit(image, (0,0))
+
+            self.remains -= 1
+
+        elif self.remains == 0:
+            self.dirty = 1
+
+            self.remains -= 1
+            self.image = self.images[self.index].copy()
+
+
 class EffectSelect(pygame.sprite.DirtySprite):
     """Select effects"""
 
-    opaque = 255
     speed = -10
 
     def __init__(self):
-        self.dirty = 2
         pygame.sprite.DirtySprite.__init__(self, self.containers)
 
-        newsurf = pygame.Surface(SCR_RECT.size)
-        newsurf.fill((0,0,0))
-        self.original_image = newsurf
-        self.image = self.original_image
+        self.none_image = pygame.Surface((0,0), HWSURFACE)
+        self.image = pygame.Surface(SCR_RECT.size, SRCALPHA|HWSURFACE)
+        self.image.fill((0,0,0,255))
         self.rect = self.image.get_rect()
+
+        self.opaque = 255
 
     def update(self):
         if self.opaque > 0:
+            self.dirty = 1
+
+            self.image.fill((0,0,0,self.opaque))
+
             if self.opaque + self.speed > 0:
                 self.opaque += self.speed
             else:
+                self.image = self.none_image
                 self.opaque = 0
+                self.dirty = 0
 
-            self.image = self.original_image.copy()
-            self.image.set_alpha(self.opaque)
 
-        else:
-            self.dirty = 0

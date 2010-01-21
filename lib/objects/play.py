@@ -204,7 +204,7 @@ class BackgroundPlay():
 
         magged_size = (int(SCR_RECT.width*(1+self.mag)), int(SCR_RECT.height*(1+self.mag)))
 
-        self.image = self.images[level-1]  # FIXME some images in one level
+        self.image = self.images[level-1]  # FIXME
         self.image = pygame.transform.scale(self.image, (magged_size[0], magged_size[1]))
         self.rect = self.image.get_rect()
 

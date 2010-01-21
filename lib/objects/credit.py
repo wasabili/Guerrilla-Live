@@ -16,20 +16,28 @@ from base           import *
 class CreditDraw():
 
     def __init__(self):
-        self.author = AuthorCredit()
+        # Sprite Group
+        self.credit_all = pygame.sprite.LayeredDirty()
 
+        # Register groups to sprites
+        AuthorCredit.containers = self.credit_all
+
+        # Objects
+        self.author = AuthorCredit()
+        self.credit_bg = pygame.Surface(SCR_RECT.size, HWSURFACE)
+        self.credit_bg.fill((0,0,0))
+    
     def update(self):
-        self.author.update()
+        self.credit_all.update()
 
     def draw(self, screen):
-        screen.fill((0,0,0))
-        screen.blit(self.author.image, (self.author.rect.x, self.author.rect.y))
+        return self.credit_all.draw(screen, self.credit_bg)
 
     def hasfinished(self):
         return self.author.hasfinished()
 
 
-class AuthorCredit(StringObjectBase):
+class AuthorCredit(StringSpriteBase):
     """Start Background"""
 
     FADEIN, WAIT, FADEOUT, EXTRA, END = range(5)
@@ -40,7 +48,8 @@ class AuthorCredit(StringObjectBase):
     fontsize = 20
     
     def __init__(self):
-        StringObjectBase.__init__(self)
+        self.dirty = 2
+        StringSpriteBase.__init__(self)
 
         self.original_image = self.image.copy()
         self.frame = 0
