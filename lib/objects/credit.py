@@ -23,9 +23,9 @@ class CreditDraw():
         AuthorCredit.containers = self.credit_all
 
         # Objects
-        self.author = AuthorCredit()
         self.credit_bg = pygame.Surface(SCR_RECT.size, HWSURFACE)
         self.credit_bg.fill((0,0,0))
+        self.author = AuthorCredit()
     
     def update(self):
         self.credit_all.update()
@@ -48,8 +48,8 @@ class AuthorCredit(StringSpriteBase):
     fontsize = 20
     
     def __init__(self):
-        self.dirty = 2
         StringSpriteBase.__init__(self)
+        self.dirty = 2
 
         self.original_image = self.image.copy()
         self.frame = 0

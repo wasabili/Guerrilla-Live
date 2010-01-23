@@ -138,7 +138,7 @@ class Guerrilla(object):
 
                 elif self.game_state == GAMEOVER:
                     self.init_game()                            # start new game
-                    self.pendingchangestate(START)
+                    self.pendingchangestate(SELECT)
 
                 elif self.game_state == HELP:
                     if not self.helpdraw.whileclosing():
@@ -150,7 +150,7 @@ class Guerrilla(object):
 
         index = self.selectdraw.get_index()
         if index == 0:
-            pass
+            print 'ARCADE MODE is selected'  #FIXME
         elif index == 1:
             self.gamedata.initlevel(1)
             self.playdraw = PlayDraw(self.gamedata)
@@ -160,11 +160,17 @@ class Guerrilla(object):
             self.playdraw = PlayDraw(self.gamedata)
             self.pendingchangestate(PLAY)
         elif index == 3:
-            pass
+            self.gamedata.initlevel(3)
+            self.playdraw = PlayDraw(self.gamedata)
+            self.pendingchangestate(PLAY)
         elif index == 4:
-            pass
+            self.gamedata.initlevel(4)
+            self.playdraw = PlayDraw(self.gamedata)
+            self.pendingchangestate(PLAY)
         elif index == 5:
-            pass
+            self.gamedata.initlevel(5)
+            self.playdraw = PlayDraw(self.gamedata)
+            self.pendingchangestate(PLAY)
         elif index == 6:
             self.helpdraw = HelpDraw()
             self.pendingchangestate(HELP)
@@ -211,7 +217,12 @@ class Guerrilla(object):
         BigEColi.image                  = load_image("big-ecoli.png")  #FIXME FIXME
         Explosion.images                = load_image("explosion.png", 16)
         HeartMark.images                = load_image("heart-animation.png", 96)
-        Gage.image                      = load_image("gage.png")
+
+        Gage.image_red                  = load_image("gage2.5.png")
+        Gage.image_blue                 = load_image("gage-blue.png")
+        GageSeparator.image             = load_image("separator.png")
+
+        WeaponPanel.images              = [load_image("weaponpanel"+str(x)+".png") for x in range(1, 4)]
 
         TitleStart.image                = load_image("logo.png")
         DescriptionSelect.images        = load_image("description.png", 7)  #FIXME
@@ -225,9 +236,10 @@ class Guerrilla(object):
 
         # Load background
         BackgroundStart.image           = load_image("start.jpg")
+        BackgroundStart2.image          = load_image("start2.jpg")
         BackgroundSelect.image          = load_image("select.jpg")
         BackgroundDescription.image     = load_image("description-bg.png")
-        BackgroundPlay.images           = load_image("play.jpg", 2)
+        BackgroundPlay.images           = load_image("play.jpg", 5, True)  #FIXME
         BackgroundGameover.loseimage    = load_image("lose.jpg")
         BackgroundGameover.winimage     = load_image("win.jpg")
 
@@ -262,12 +274,12 @@ class GameData(object):
     """Manage data while playing"""
 
     WIN, LOSE = range(2)
-    SHOT, SUBSHOT = range(2)
+    SHOT, SUBSHOT, MACHINEGUN, BOMB = range(4)
 
     killed = 0
     bosslimit = sys.maxint
     
-    subshot_timelimit = 300
+    gage_limit = 300 #FIXME FIXME
 
     def __init__(self):
         pass
@@ -279,32 +291,57 @@ class GameData(object):
         self.level = level
         self.result = self.LOSE
         self.lastscreen = None
-        self.subshot_timer = 0
-        self.subshot_counter = 0
+
+        self.subweapon_counter = 0
+        self.subweapon_limiter = 0
+ 
 
         if level == 1:
             self.killed = 0
             self.bosslimit = 500
             self.enemies = [
-                (EColi, 0.10, 0.05)
+                (EColi, 0.15, 0.05)
             ]
             self.boss = BigEColi
 
-        if level == 2:
+        elif level == 2:
             self.killed = 0
             self.bosslimit = 800
             self.enemies = [
-                (EColi, 0.10, 0.03),
+                (EColi, 0.075, 0.03),
                 (EColi2, 0.05, 0.01)
             ]
             self.boss = BigEColi #FIXME
 
+        elif level == 3:
+            self.killed = 0
+            self.bosslimit = 30
+            self.enemies = [
+                (EColi, 0.10, 0.05)
+            ]
+            self.boss = BigEColi #FIXME
+
+        elif level == 4:
+            self.killed = 0
+            self.bosslimit = 30
+            self.enemies = [
+                (EColi, 0.10, 0.05)
+            ]
+            self.boss = BigEColi #FIXME
+
+        elif level == 5:
+            self.killed = 0
+            self.bosslimit = 30
+            self.enemies = [
+                (EColi, 0.10, 0.05)
+            ]
+            self.boss = BigEColi #FIXME
+
+
     def killed_enemies(self, amount):
         self.killed += amount
-        if self.weapon_mode == self.SUBSHOT:
-            self.subshot_counter = 0
-        else:
-            self.subshot_counter += amount
+        if self.weapon_mode == self.SHOT:
+            self.subweapon_counter = min(self.subweapon_counter+amount, self.gage_limit)
 
     def get_score(self):    #FIXME
         return self.killed*10

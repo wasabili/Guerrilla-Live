@@ -43,7 +43,7 @@ class PlayDraw():
 
     def __init__(self, gamedata):
         # Create sprite groups
-        self.play_all   = pygame.sprite.LayeredUpdates()           # Play screen
+        self.play_all   = pygame.sprite.LayeredUpdates()          # Play screen
         self.enemies    = pygame.sprite.Group()                   # Enemy Group
         self.shots      = pygame.sprite.Group()                   # Beam Group
         self.bosses     = pygame.sprite.Group()                   # Bosses Group
@@ -57,22 +57,26 @@ class PlayDraw():
         Explosion.containers        = self.play_all
         HeartMark.containers        = self.play_all
         Gage.containers             = self.play_all
+        WeaponPanel.containers      = self.play_all
 
         # Create recycle boxes
-        EColi.recyclebox = deque()
-        EColi2.recyclebox = deque()
-        Shot.recyclebox = deque()
+        EColi.recyclebox    = deque()
+        EColi2.recyclebox   = deque()
+        Shot.recyclebox     = deque()
 
         # Set Layer
         Player._layer       = 100
         HeartMark._layer    = 200
         Explosion._layer    = 100
         Gage._layer         = 200
-        GageMask._layer     = 300
+        GageMask._layer     = 201
+        GageSeparator._layer    = 202
+        WeaponPanel._layer  = 200
 
         self.player = Player()
         self.bg_play = BackgroundPlay(gamedata.level)
         self.gage = Gage(gamedata)
+        self.weaponpanel = WeaponPanel()
 
         self.gamedata = gamedata
         self.boss = None
@@ -87,7 +91,60 @@ class PlayDraw():
 
         self.collision_detection()  # detect collision
 
-        # Shoot a shot
+
+        """ Weapon System"""
+        if self.gamedata.weapon_mode == self.gamedata.SHOT:
+            counter = self.gamedata.subweapon_counter
+
+            # Weapon Panels
+            if counter*3 >= self.gamedata.gage_limit:
+                self.weaponpanel.set_enable(0, True)
+            if counter*3 >= self.gamedata.gage_limit*2:
+                self.weaponpanel.set_enable(1, True)
+            if counter >= self.gamedata.gage_limit:
+                self.weaponpanel.set_enable(2, True)
+
+            # Select
+            pressed_keys = pygame.key.get_pressed()
+            if pressed_keys[K_b] and self.weaponpanel.get_enable(0):
+                self.gamedata.weapon_mode = self.gamedata.SUBSHOT
+                self.gamedata.subweapon_limiter = counter - self.gamedata.gage_limit/3
+                self.weaponpanel.set_enable(1, False)
+                self.weaponpanel.set_enable(2, False)
+            elif pressed_keys[K_v] and self.weaponpanel.get_enable(1):
+                self.gamedata.weapon_mode = self.gamedata.MACHINEGUN
+                self.gamedata.subweapon_limiter = counter - self.gamedata.gage_limit*2/3
+                self.weaponpanel.set_enable(0, False)
+                self.weaponpanel.set_enable(2, False)
+            elif pressed_keys[K_c] and self.weaponpanel.get_enable(2):
+                self.gamedata.weapon_mode = self.gamedata.BOMB
+                self.gamedata.subweapon_limiter = 0
+                self.weaponpanel.set_enable(0, False)
+                self.weaponpanel.set_enable(1, False)
+
+        elif self.gamedata.weapon_mode == self.gamedata.SUBSHOT:
+            self.gamedata.subweapon_counter -= 0.3
+            if self.gamedata.subweapon_counter <= self.gamedata.subweapon_limiter:
+                self.gamedata.subweapon_counter = self.gamedata.subweapon_limiter
+                self.gamedata.weapon_mode = self.gamedata.SHOT
+                self.weaponpanel.set_enable(0, False)
+
+        elif self.gamedata.weapon_mode == self.gamedata.MACHINEGUN:
+            self.gamedata.subweapon_counter -= 0.6
+            if self.gamedata.subweapon_counter <= self.gamedata.subweapon_limiter:
+                self.gamedata.subweapon_counter = self.gamedata.subweapon_limiter
+                self.gamedata.weapon_mode = self.gamedata.SHOT
+                self.weaponpanel.set_enable(1, False)
+
+        elif self.gamedata.weapon_mode == self.gamedata.BOMB:
+            self.gamedata.subweapon_counter -= sys.maxint
+            if self.gamedata.subweapon_counter <= self.gamedata.subweapon_limiter:
+                self.gamedata.subweapon_counter = self.gamedata.subweapon_limiter
+                self.gamedata.weapon_mode = self.gamedata.SHOT
+                self.weaponpanel.set_enable(2, False)
+
+
+        """ Shoot a shot """
         mouse_pressed = pygame.mouse.get_pressed()
         if mouse_pressed[0]:
             # Normal Shot
@@ -102,7 +159,6 @@ class PlayDraw():
 
             # Sub-Shot
             elif self.gamedata.weapon_mode == self.gamedata.SUBSHOT:
-                self.gamedata.subshot_timer -= 1
                 if self.shot_reload_timer > 0:  # Unable to shoot while reloading
                     self.shot_reload_timer -= 1
                 else:
@@ -111,8 +167,18 @@ class PlayDraw():
                     TripleShot(player_pos, pygame.mouse.get_pos())
                     self.shot_reload_timer = self.shot_reload_time
 
+            # MACHINEGUN
+            elif self.gamedata.weapon_mode == self.gamedata.MACHINEGUN:
+                if self.shot_reload_timer > 0:  # Unable to shoot while reloading
+                    self.shot_reload_timer -= 1
+                else:
+                    # Shoot
+                    #Player.shot_sound.play()  #FIXME
+                    SextupleShot(player_pos, pygame.mouse.get_pos())
+                    self.shot_reload_timer = self.shot_reload_time
 
-        # Generate enemies
+
+        """ Generate enemies """
         if self.boss is None:
             # Create new enemies
             for enemy, freq, subfreq in self.gamedata.enemies:
@@ -136,11 +202,9 @@ class PlayDraw():
                 self.gamedata.result = self.gamedata.WIN
                 self.gameover = True
 
-
     def draw(self, screen):
         screen.blit(self.bg_play.image, (self.bg_play.rect.x, self.bg_play.rect.y))     # Background
         self.play_all.draw(screen)                                                      # Objects
-
 
     def gen_random_position(self, freq):
         """Generate random position"""
@@ -166,11 +230,10 @@ class PlayDraw():
         else:
             return None
 
-
     def collision_detection(self):
         """Detect collision"""
 
-        # Between enemies and shots
+        """ Between enemies and shots """
         enemy_collided = pygame.sprite.groupcollide(self.enemies, self.shots, False, True)
         for enemy, shots in enemy_collided.items():
             #EColi.kill_sound.play() #FIXME
@@ -181,7 +244,7 @@ class PlayDraw():
                 self.gamedata.killed_enemies(1)       # FIXME
                 Explosion(shots[0].rect.center) # Draw explosion
 
-        # Between player and E.Colis
+        """ Between player and E.Colis """
         player_collided = pygame.sprite.spritecollide(self.player, self.enemies, True)
         if player_collided:
             if not self.player.is_invincible():
@@ -217,6 +280,11 @@ class BackgroundPlay():
 
         self.rect.x = self.startx + (start[0] - pos[0])*self.mag
         self.rect.y = self.starty + (start[1] - pos[1])*self.mag
+
+
+#########################################################################################
+#                     PLAYER                                                            #
+#########################################################################################
 
 
 class Player(pygame.sprite.Sprite):
@@ -406,7 +474,7 @@ class Shot(pygame.sprite.Sprite):
 
 
 class TripleShot():
-    """プレイヤーが発射するビーム"""
+    """プレイヤーが発射するビーム x3"""
 
     def __init__(self, start, target):
         direction = math.atan2(target[1]-start[1], target[0]-start[0])
@@ -416,6 +484,26 @@ class TripleShot():
         recycle_or_gen_object(Shot, start, None, degree+240 if degree+240<180 else degree-120)
         del self
         
+
+class SextupleShot():
+    """プレイヤーが発射するビーム x6"""
+
+    def __init__(self, start, target):
+        direction = math.atan2(target[1]-start[1], target[0]-start[0])
+        degree = -180*direction/math.pi
+        recycle_or_gen_object(Shot, start, None, degree)
+        recycle_or_gen_object(Shot, start, None, degree+60 if degree+60<180 else degree-300)
+        recycle_or_gen_object(Shot, start, None, degree+120 if degree+120<180 else degree-240)
+        recycle_or_gen_object(Shot, start, None, degree+180 if degree+180<180 else degree-180)
+        recycle_or_gen_object(Shot, start, None, degree+240 if degree+240<180 else degree-120)
+        recycle_or_gen_object(Shot, start, None, degree+300 if degree+300<180 else degree-60)
+        del self
+
+
+#########################################################################################
+#                     ENEMIES                                                           #
+#########################################################################################
+
 
 class EColi(pygame.sprite.Sprite):
     """E.Coli"""
@@ -438,11 +526,13 @@ class EColi(pygame.sprite.Sprite):
         self.frame = 0
 
     def init(self, pos):
-        self.frame = 0
         # set pos
+        self.frame = 0
         self.rect.center = pos
         self.fpx = float(self.rect.x)
         self.fpy = float(self.rect.y)
+
+        # reborn
         self.add(self.containers)
 
     def update(self):
@@ -481,6 +571,7 @@ class EColi(pygame.sprite.Sprite):
 class EColi2(pygame.sprite.Sprite):
     """E.Coli2"""
 
+    start_hp = 3
     speed = 0.4  # 移動速度
 
     def __init__(self, pos):
@@ -494,13 +585,16 @@ class EColi2(pygame.sprite.Sprite):
         self.fpx = float(self.rect.x)
         self.fpy = float(self.rect.y)
 
-        self.hp = 3
+        self.hp = self.start_hp
 
     def init(self, pos):
         # set pos
         self.rect.center = pos
         self.fpx = float(self.rect.x)
         self.fpy = float(self.rect.y)
+        self.hp = self.start_hp
+
+        # reborn
         self.add(self.containers)
 
     def update(self):
@@ -596,6 +690,40 @@ class BigEColi(pygame.sprite.Sprite):
         return self.hp > 0
 
 
+#########################################################################################
+#                     EFFECT                                                            #
+#########################################################################################
+
+
+class Explosion(pygame.sprite.Sprite):
+    """Explosion effect"""
+
+    animecycle = 2  # アニメーション速度
+    max_frame = 16 * animecycle  # a frame to disappear
+
+    def __init__(self, pos):
+        pygame.sprite.Sprite.__init__(self, self.containers)
+
+        self.image = self.images[0]
+
+        self.rect = self.image.get_rect()
+        self.rect.center = pos
+
+        self.frame = 0
+
+    def update(self):
+        # Character Animation
+        self.image = self.images[self.frame/self.animecycle]
+        self.frame += 1
+        if self.frame == self.max_frame:
+            self.kill()  # disappear
+
+
+#########################################################################################
+#                     SYSTEM                                                            #
+#########################################################################################
+
+
 class HeartMark(pygame.sprite.Sprite):
     """Life remains"""
 
@@ -604,6 +732,7 @@ class HeartMark(pygame.sprite.Sprite):
 
     def __init__(self, pos):
         pygame.sprite.Sprite.__init__(self, self.containers)
+        self.dirty = 2
 
         self.image = self.images[0]
 
@@ -636,54 +765,50 @@ class HeartMark(pygame.sprite.Sprite):
     def destroy(self):
         self.destroyed = True
 
-class Explosion(pygame.sprite.Sprite):
-    """Explosion effect"""
-
-    animecycle = 2  # アニメーション速度
-    max_frame = 16 * animecycle  # a frame to disappear
-
-    def __init__(self, pos):
-        pygame.sprite.Sprite.__init__(self, self.containers)
-
-        self.image = self.images[0]
-
-        self.rect = self.image.get_rect()
-        self.rect.center = pos
-
-        self.frame = 0
-
-    def update(self):
-        # Character Animation
-        self.image = self.images[self.frame/self.animecycle]
-        self.frame += 1
-        if self.frame == self.max_frame:
-            self.kill()  # disappear
-
 
 class Gage(pygame.sprite.Sprite):
     """Score Gage"""
 
-    pos = (21, 705)
+    pos = (28, 18)
 
     def __init__(self, gamedata):
         pygame.sprite.Sprite.__init__(self, self.containers)
 
+        self.image = self.image_red
         self.rect = self.image.get_rect()
         self.rect.topleft = self.pos
 
+        # Mask
         GageMask.containers = self.containers
-        GageMask(gamedata, self.pos)
+        self.gagemask = GageMask(gamedata, self.pos)
+
+        # Separators
+        GageSeparator.containers = self.containers
+        self.gagesep1 = GageSeparator((350, 19))
+        self.gagesep2 = GageSeparator((701, 19))
+
+        self.gamedata = gamedata
+        self.lastweapon = self.gamedata.SHOT
 
     def update(self):
-        pass
+        if self.gamedata.weapon_mode == self.lastweapon:
+            return
+
+        elif self.gamedata.weapon_mode == self.gamedata.SHOT:
+            self.image = self.image_red
+            self.lastweapon = self.gamedata.weapon_mode
+            self.dirty = 1
+        else:
+            self.image = self.image_blue
+            self.lastweapon = self.gamedata.weapon_mode
+            self.dirty = 1
 
 
 class GageMask(pygame.sprite.Sprite):
 
-    max_width = 387
-    max_height = 17
-
-    killedlimit = 100
+    max_width = 964
+    max_height = 5
+    border_length = 2
 
     def __init__(self, gamedata, pos):
         pygame.sprite.Sprite.__init__(self, self.containers)
@@ -692,36 +817,101 @@ class GageMask(pygame.sprite.Sprite):
         self.image.fill((0,0,0))
         self.none_image = pygame.Surface((0,0))
         self.rect = self.image.get_rect()
-        self.rect.topright = (pos[0]+2+self.max_width, pos[1]+2)
+        self.topright = (pos[0]+self.border_length+self.max_width, pos[1]+self.border_length)
+        self.rect.topright = self.topright
 
-        self.topright = (pos[0]+2+self.max_width, pos[1]+2)
+        self.percent = 0
         self.gamedata = gamedata
 
     def update(self):
+        self.dirty = 1
 
-        if self.gamedata.weapon_mode == self.gamedata.SHOT:
+        self.percent = float(self.gamedata.subweapon_counter)/self.gamedata.gage_limit
 
-            counter = self.gamedata.subshot_counter
-            if counter >= self.killedlimit:
-                self.image = self.none_image
-                pressed_keys = pygame.key.get_pressed()
-                if pressed_keys[K_SPACE]:
-                    self.gamedata.weapon_mode = self.gamedata.SUBSHOT
-                    self.gamedata.subshot_timer = self.gamedata.subshot_timelimit
+        self.image = pygame.Surface((self.max_width*(1-self.percent), self.max_height))
+        self.image.fill((0,0,0))
+        self.rect = self.image.get_rect()
+        self.rect.topright = self.topright
+
+
+class GageSeparator(pygame.sprite.Sprite):
+
+    def __init__(self, pos):
+        pygame.sprite.Sprite.__init__(self, self.containers)
+
+        self.rect = self.image.get_rect()
+        self.rect.topleft = pos
+
+class WeaponPanel():
+
+    y = 50
+
+    def __init__(self):
+        WeaponPanelPart.containers  = self.containers
+        WeaponPanelPart._layer      = self._layer
+
+        height = self.images[0].get_height()
+        self.parts = []
+        self.parts.append(WeaponPanelPart(self.images[0], self.y+(height*3/2)*0))
+        self.parts.append(WeaponPanelPart(self.images[1], self.y+(height*3/2)*1))
+        self.parts.append(WeaponPanelPart(self.images[2], self.y+(height*3/2)*2))
+
+    def set_enable(self, index, enable):
+        self.parts[index].set_enable(enable)
+
+    def get_enable(self, index):
+        return self.parts[index].get_enable()
+
+
+class WeaponPanelPart(pygame.sprite.DirtySprite):
+
+    speed = 5
+
+    def __init__(self, image, y):
+        pygame.sprite.DirtySprite.__init__(self, self.containers)
+
+        self.image = image
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (SCR_RECT.width, y)
+
+        self.max_x = SCR_RECT.width - 15
+        self.min_x = SCR_RECT.width - self.image.get_width()
+
+        self.x = self.max_x
+        self.vx = 0
+
+        self.enabled = False
+        self.activated = False
+
+    def get_enable(self):
+        return self.enabled
+
+    def set_enable(self, enable):
+        self.enabled = enable
+        if enable:
+            self.vx = -self.speed
+        else:
+            self.vx = self.speed
+
+    def set_activate(self, active):
+        self.activated = active
+
+    def update(self):
+        self.dirty = 1
+
+        self.rect.x = self.x
+
+        if self.vx != 0:
+            self.dirty = 1
+
+            n = self.x + self.vx
+            if n < self.min_x:
+                self.x = self.min_x
+                self.vx = 0
+            elif n > self.max_x:
+                self.x = self.max_x
+                self.vx = 0
             else:
-                self.image = pygame.Surface((self.max_width*(1-float(counter)/self.killedlimit), self.max_height))
-                self.image.fill((0,0,0))
-                self.rect = self.image.get_rect()
-                self.rect.topright = self.topright
+                self.x = n
 
-        elif self.gamedata.weapon_mode == self.gamedata.SUBSHOT:
-
-            counter = self.gamedata.subshot_timer
-            self.image = pygame.Surface((self.max_width*(1-float(counter)/self.gamedata.subshot_timelimit), self.max_height))
-            self.image.fill((0,0,0))
-            self.rect = self.image.get_rect()
-            self.rect.topright = self.topright
-
-            if counter <= 0:
-                self.gamedata.weapon_mode = self.gamedata.SHOT
 

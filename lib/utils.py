@@ -9,7 +9,7 @@ import numpy
 import time
 
 
-def load_image(filename, sprit=None, colorkey=False):
+def load_image(filename, sprit=None, nontrans=False, colorkey=False):
     """画像をロードして画像と矩形を返す"""
     filename = os.path.join("data", filename)
     try:
@@ -20,6 +20,8 @@ def load_image(filename, sprit=None, colorkey=False):
     if colorkey:
         colorkey = image.get_at((0,0))
         image.set_colorkey(colorkey, RLEACCEL)
+    if nontrans:
+        image = image.convert()
     if sprit is not None:
         return _split_image(image, sprit, colorkey)
     return image

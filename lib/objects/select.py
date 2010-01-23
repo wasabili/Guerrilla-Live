@@ -187,8 +187,8 @@ class BlinkerSelect(pygame.sprite.DirtySprite):
     pos = (10, 5)
 
     def __init__(self):
-        self.dirty = 2
         pygame.sprite.DirtySprite.__init__(self, self.containers)
+        self.dirty = 2
 
         # Create images
         self.blinkimage_light = pygame.Surface((30, 50), SRCALPHA|HWSURFACE)
@@ -559,6 +559,7 @@ class EffectSelect(pygame.sprite.DirtySprite):
                 self.opaque += self.speed
             else:
                 self.image = self.none_image
+                self.rect = Rect(0,0,0,0)
                 self.opaque = 0
                 self.dirty = 0
 
