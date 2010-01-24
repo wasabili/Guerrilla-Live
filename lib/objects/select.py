@@ -33,7 +33,7 @@ class SelectDraw():
 
         # Objects
         self.description = DescriptionSelect()
-        self.sidebar = SidebarSelect()                     # FIXME
+        self.sidebar = SidebarSelect()
         self.blinker = BlinkerSelect()
         self.highlight = HighlightSelect(self.blinker, self.description, self.sidebar)
 
@@ -63,7 +63,6 @@ class BackgroundSelect(pygame.sprite.DirtySprite):
 
     def __init__(self):
         pygame.sprite.DirtySprite.__init__(self, self.containers)
-
         self.rect = self.image.get_rect()
 
     def update(self):
@@ -136,7 +135,7 @@ class HighlightSelect(pygame.sprite.DirtySprite):
         self.key_handler()
 
         # Move Highlight
-        if self.oldindex != self.index: #FIXME
+        if self.oldindex != self.index:
             self.rect.x = self.entrylist[self.index][0] + self.diffx
             self.rect.y = self.entrylist[self.index][1] + self.diffy
             self.oldindex = self.index
@@ -212,10 +211,10 @@ class DescriptionSelect():
 
     def change(self, index, up):
         if up:
-            self.parts[index+1].change_speed(1)  # add animation
+            self.parts[index+1].change_speed(1) # add animation
             self.parts[index].change_speed(-1)  # add animation
         else:
-            self.parts[index-1].change_speed(1)  # add animation
+            self.parts[index-1].change_speed(1) # add animation
             self.parts[index].change_speed(-1)  # add animation
 
 

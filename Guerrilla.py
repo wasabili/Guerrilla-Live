@@ -217,26 +217,31 @@ class Guerrilla(object):
         BigEColi.image                  = load_image("big-ecoli.png")  #FIXME FIXME
         Explosion.images                = load_image("explosion.png", 16)
         HeartMark.images                = load_image("heart-animation.png", 96)
+        WeaponPanel.images              = [load_image("weaponpanel"+str(x)+".png") for x in range(1, 4)]
 
+        # Gage
         Gage.image_red                  = load_image("gage-red.png")
         Gage.image_blue                 = load_image("gage-blue.png")
         GageSeparator.image             = load_image("gage-separator.png")
 
-        WeaponPanel.images              = [load_image("weaponpanel"+str(x)+".png") for x in range(1, 4)]
 
+        # Select
         DescriptionSelect.images        = load_image("description.png", 7)  #FIXME
         HighlightSelect.image           = load_image("highlight.png")
-        SidebarSelect.images            = load_image("sidebar.jpg", 7)  #FIXME
+        SidebarSelect.images            = [load_image("sidebar"+str(x)+".png").convert() for x in range(1, 8)]
 
-        BackgroundHelp.images           = load_image('help.png', 10)
+        # Help
+        BackgroundHelp.images           = [load_image("help-background"+str(x)+".png").convert() for x in range(10)]
         ContentsHelp.image              = load_image('help-contents.png')
 
         # Load background
         BackgroundStart.image           = load_image("start.jpg")
         BackgroundSelect.image          = load_image("select.jpg")
-        BackgroundPlay.images           = load_image("play.jpg", 5, True)  #FIXME
-        BackgroundGameover.loseimage    = load_image("lose.jpg")
-        BackgroundGameover.winimage     = load_image("win.jpg")
+        BackgroundPlay.images           = load_image("play.jpg", 5, True)
+
+        # GameOver
+        BackgroundGameover.loseimage    = load_image("gameover-lose.jpg")
+        BackgroundGameover.winimage     = load_image("gameover-win.jpg")
 
 
     def load_sounds(self):
