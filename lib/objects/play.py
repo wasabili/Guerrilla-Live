@@ -65,13 +65,13 @@ class PlayDraw():
         Shot.recyclebox     = deque()
 
         # Set Layer
-        Player._layer       = 100
-        HeartMark._layer    = 200
-        Explosion._layer    = 100
-        Gage._layer         = 200
-        GageMask._layer     = 201
+        Player._layer           = 100
+        HeartMark._layer        = 200
+        Explosion._layer        = 100
+        Gage._layer             = 200
+        GageMask._layer         = 201
         GageSeparator._layer    = 202
-        WeaponPanel._layer  = 200
+        WeaponPanel._layer      = 200
 
         self.player = Player()
         self.bg_play = BackgroundPlay(gamedata.level)
@@ -82,17 +82,23 @@ class PlayDraw():
         self.boss = None
         self.gameover = False
 
-        # Shot
-        self.shot_reload_timer = 5
+        # Shot reloading
+        self.shot_reload_timer = 0
 
     def update(self):
         self.bg_play.update()
         self.play_all.update()
 
-        self.collision_detection()  # detect collision
+        self.manage_weapon_system()
+        self.manage_enemies()
 
+    def draw(self, screen):
+        screen.blit(self.bg_play.image, (self.bg_play.rect.x, self.bg_play.rect.y))     # Background
+        self.play_all.draw(screen)                                                      # Objects
 
-        """ Weapon System"""
+    def manage_weapon_system(self):
+        """ Manage Weapon System"""
+
         if self.gamedata.weapon_mode == self.gamedata.SHOT:
             counter = self.gamedata.subweapon_counter
 
@@ -122,7 +128,25 @@ class PlayDraw():
                 self.weaponpanel.set_enable(0, False)
                 self.weaponpanel.set_enable(1, False)
 
+            # Reload
+            self.shot_reload_timer -= 1
+
+            # Shoot
+            if pygame.mouse.get_pressed()[0] and self.shot_reload_timer <= 0:  # Not while reloading
+                recycle_or_gen_object(Shot, player_pos, pygame.mouse.get_pos())
+                self.shot_reload_timer = self.shot_reload_time
+
         elif self.gamedata.weapon_mode == self.gamedata.SUBSHOT:
+
+            # Reload
+            self.shot_reload_timer -= 1
+
+            # Shoot
+            if pygame.mouse.get_pressed()[0] and self.shot_reload_timer <= 0:  # Not while reloading
+                TripleShot(player_pos, pygame.mouse.get_pos())
+                self.shot_reload_timer = self.shot_reload_time
+
+            # Time limit which a player is able to use this weapon
             self.gamedata.subweapon_counter -= 0.3
             if self.gamedata.subweapon_counter <= self.gamedata.subweapon_limiter:
                 self.gamedata.subweapon_counter = self.gamedata.subweapon_limiter
@@ -130,6 +154,16 @@ class PlayDraw():
                 self.weaponpanel.set_enable(0, False)
 
         elif self.gamedata.weapon_mode == self.gamedata.MACHINEGUN:
+
+            # Reload
+            self.shot_reload_timer -= 1
+
+            # Shoot
+            if pygame.mouse.get_pressed()[0] and self.shot_reload_timer <= 0:  # Not while reloading
+                SextupleShot(player_pos, pygame.mouse.get_pos())
+                self.shot_reload_timer = self.shot_reload_time
+
+            # Time limit which a player is able to use this weapon
             self.gamedata.subweapon_counter -= 0.6
             if self.gamedata.subweapon_counter <= self.gamedata.subweapon_limiter:
                 self.gamedata.subweapon_counter = self.gamedata.subweapon_limiter
@@ -137,47 +171,21 @@ class PlayDraw():
                 self.weaponpanel.set_enable(1, False)
 
         elif self.gamedata.weapon_mode == self.gamedata.BOMB:
+
+            # FIXME FIXME
+
+            # Time limit which a player is able to use this weapon
             if self.gamedata.subweapon_counter <= self.gamedata.subweapon_limiter:
                 self.gamedata.subweapon_counter = self.gamedata.subweapon_limiter
                 self.gamedata.weapon_mode = self.gamedata.SHOT
                 self.weaponpanel.set_enable(2, False)
 
+    def manage_enemies(self):
+        """ Manage enemies """
 
-        """ Shoot a shot """
-        mouse_pressed = pygame.mouse.get_pressed()
-        if mouse_pressed[0]:
-            # Normal Shot
-            if self.gamedata.weapon_mode == self.gamedata.SHOT:
-                if self.shot_reload_timer > 0:  # Unable to shoot while reloading
-                    self.shot_reload_timer -= 1
-                else:
-                    # Shoot
-                    #Player.shot_sound.play()  #FIXME
-                    recycle_or_gen_object(Shot, player_pos, pygame.mouse.get_pos())
-                    self.shot_reload_timer = self.shot_reload_time
+        # detect collision
+        self.collision_detection()
 
-            # Sub-Shot
-            elif self.gamedata.weapon_mode == self.gamedata.SUBSHOT:
-                if self.shot_reload_timer > 0:  # Unable to shoot while reloading
-                    self.shot_reload_timer -= 1
-                else:
-                    # Shoot
-                    #Player.shot_sound.play()  #FIXME
-                    TripleShot(player_pos, pygame.mouse.get_pos())
-                    self.shot_reload_timer = self.shot_reload_time
-
-            # MACHINEGUN
-            elif self.gamedata.weapon_mode == self.gamedata.MACHINEGUN:
-                if self.shot_reload_timer > 0:  # Unable to shoot while reloading
-                    self.shot_reload_timer -= 1
-                else:
-                    # Shoot
-                    #Player.shot_sound.play()  #FIXME
-                    SextupleShot(player_pos, pygame.mouse.get_pos())
-                    self.shot_reload_timer = self.shot_reload_time
-
-
-        """ Generate enemies """
         if self.boss is None:
             # Create new enemies
             for enemy, freq, subfreq in self.gamedata.enemies:
@@ -201,9 +209,23 @@ class PlayDraw():
                 self.gamedata.result = self.gamedata.WIN
                 self.gameover = True
 
-    def draw(self, screen):
-        screen.blit(self.bg_play.image, (self.bg_play.rect.x, self.bg_play.rect.y))     # Background
-        self.play_all.draw(screen)                                                      # Objects
+    def collision_detection(self):
+        """Detect collision"""
+
+        """ Between enemies and shots """
+        enemy_collided = pygame.sprite.groupcollide(self.enemies, self.shots, False, True)
+        for enemy, shots in enemy_collided.items():
+            if not enemy.hit_once():
+                enemy.kill()                    # Kill an enemy
+                self.gamedata.killed_enemies(1)       # FIXME
+                Explosion(shots[0].rect.center) # Draw explosion
+
+        """ Between player and E.Colis """
+        player_collided = pygame.sprite.spritecollide(self.player, self.enemies, True)
+        if player_collided:
+            if not self.player.killed_once(): # die once
+                self.gamedata.result = self.gamedata.LOSE
+                self.gameover = True
 
     def gen_random_position(self, freq):
         """Generate random position"""
@@ -228,30 +250,6 @@ class PlayDraw():
             return x, y
         else:
             return None
-
-    def collision_detection(self):
-        """Detect collision"""
-
-        """ Between enemies and shots """
-        enemy_collided = pygame.sprite.groupcollide(self.enemies, self.shots, False, True)
-        for enemy, shots in enemy_collided.items():
-            #EColi.kill_sound.play() #FIXME
-
-            # Bomb!
-            if not enemy.hit_once():
-                enemy.kill()                    # Kill an enemy
-                self.gamedata.killed_enemies(1)       # FIXME
-                Explosion(shots[0].rect.center) # Draw explosion
-
-        """ Between player and E.Colis """
-        player_collided = pygame.sprite.spritecollide(self.player, self.enemies, True)
-        if player_collided:
-            if not self.player.is_invincible():
-                #Player.bomb_sound.play()  #FIXME
-                pass
-            if not self.player.killed_once(): # die once
-                self.gamedata.result = self.gamedata.LOSE
-                self.gameover = True
 
     def hasfinished(self):
         return self.gameover
