@@ -137,7 +137,6 @@ class PlayDraw():
                 self.weaponpanel.set_enable(1, False)
 
         elif self.gamedata.weapon_mode == self.gamedata.BOMB:
-            self.gamedata.subweapon_counter -= sys.maxint
             if self.gamedata.subweapon_counter <= self.gamedata.subweapon_limiter:
                 self.gamedata.subweapon_counter = self.gamedata.subweapon_limiter
                 self.gamedata.weapon_mode = self.gamedata.SHOT
@@ -391,11 +390,11 @@ class Player(pygame.sprite.Sprite):
         # Restrict player position inside SCR_RECT
         if SCR_RECT.right <= self.rect.right and self.fpvx > 0:
             self.fpvx = 0
-        if SCR_RECT.left >= self.rect.left and self.fpvx < 0:
+        elif SCR_RECT.left >= self.rect.left and self.fpvx < 0:
             self.fpvx = 0
         if SCR_RECT.top >= self.rect.top and self.fpvy < 0:
             self.fpvy = 0
-        if SCR_RECT.bottom <= self.rect.bottom and self.fpvy > 0:
+        elif SCR_RECT.bottom <= self.rect.bottom and self.fpvy > 0:
             self.fpvy = 0
 
         self.fpx += self.fpvx
@@ -544,7 +543,7 @@ class EColi(pygame.sprite.Sprite):
         # 終点の角度を計算
         target = player_pos
         start = self.rect.center
-        direction = math.atan2(float(target[1]-start[1]), float(target[0]-start[0]))
+        direction = math.atan2(target[1]-start[1], target[0]-start[0])
 
         # rotate
         self.image = pygame.transform.rotate(self.image, -180*direction/math.pi)
@@ -602,7 +601,7 @@ class EColi2(pygame.sprite.Sprite):
         # 終点の角度を計算
         target = player_pos
         start = self.rect.center
-        direction = math.atan2(float(target[1]-start[1]), float(target[0]-start[0]))
+        direction = math.atan2(target[1]-start[1], target[0]-start[0])
 
         # rotate
         self.image = self.original_image.copy()
@@ -644,7 +643,7 @@ class BigEColi(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self, self.containers)
 
         self.rect = self.image.get_rect()
-        #self.rect = Rect(0, 0, self.rect.width*3/4, self.rect.height*2/3)  #FIXME test
+        self.rect = Rect(self.rect.width*1/8, self.rect.height*1/8, self.rect.width*3/4, self.rect.height*3/4)  #FIXME test
         self.rect.center = (-self.rect.width/2, -self.rect.height/2)
 
         # Calculate speed
@@ -654,7 +653,7 @@ class BigEColi(pygame.sprite.Sprite):
         # 終点の角度を計算
         self.target = self.point1
         self.start = self.rect.center
-        self.direction = math.atan2(float(self.target[1]-self.start[1]), float(self.target[0]-self.start[0]))
+        self.direction = math.atan2(self.target[1]-self.start[1], self.target[0]-self.start[0])
 
         # Move
         self.fpvx = math.cos(self.direction) * self.speed
@@ -785,7 +784,7 @@ class Gage(pygame.sprite.Sprite):
         # Separators
         GageSeparator.containers = self.containers
         self.gagesep1 = GageSeparator((350, 19))
-        self.gagesep2 = GageSeparator((701, 19))
+        self.gagesep2 = GageSeparator((671, 19))
 
         self.gamedata = gamedata
         self.lastweapon = self.gamedata.SHOT
@@ -842,6 +841,7 @@ class GageSeparator(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.topleft = pos
 
+
 class WeaponPanel():
 
     y = 50
@@ -881,7 +881,6 @@ class WeaponPanelPart(pygame.sprite.DirtySprite):
         self.vx = 0
 
         self.enabled = False
-        self.activated = False
 
     def get_enable(self):
         return self.enabled
@@ -892,9 +891,6 @@ class WeaponPanelPart(pygame.sprite.DirtySprite):
             self.vx = -self.speed
         else:
             self.vx = self.speed
-
-    def set_activate(self, active):
-        self.activated = active
 
     def update(self):
         self.dirty = 1

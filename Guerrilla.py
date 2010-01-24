@@ -266,7 +266,7 @@ class Guerrilla(object):
 
 
     def debug(self, screen, txt):
-        screen.blit(self.font.render('debug: '+txt, False, (255,255,255)), (20,20))
+        screen.blit(self.font.render('debug: '+txt, False, (255,255,255)), (20,748))
 
 
 
