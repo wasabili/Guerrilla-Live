@@ -17,37 +17,37 @@ from start          import PushSpaceStart
 class GameoverDraw():
 
     def __init__(self, gamedata):  # FIXME win or lose
-        self.gamedata = gamedata
+        # Sprite Group
+        self.gameover_all = pygame.sprite.LayeredDirty()
 
-        BackgroundGameover.lastgame_image = self.gamedata.get_lastscreen()
-        ScoreGameover.score = self.gamedata.get_score()
+        # Register groups to sprites
+        BackgroundGameover.containers       = self.gameover_all
+        TitleGameover.containers            = self.gameover_all
+        ScoreGameover.containers            = self.gameover_all
+        PushSpaceGameover.containers        = self.gameover_all
 
-        self.bg_gameover = BackgroundGameover(self.gamedata.result == self.gamedata.WIN)
+        # Objects
+        self.bg_gameover = BackgroundGameover(gamedata.result == gamedata.WIN, gamedata.lastscreen)
         self.title = TitleGameover()
-        self.score = ScoreGameover()
+        self.score = ScoreGameover(gamedata.get_score())
         self.pushspace = PushSpaceGameover()
 
+        self.gamedata = gamedata
+
     def update(self):
-        self.bg_gameover.update()
-        self.title.update()
-        self.score.update()
-        self.pushspace.update()
+        self.gameover_all.update()
 
     def draw(self, screen):
-        # Background
-        screen.fill((255,255,255))
-        screen.blit(self.bg_gameover.image, (0,0))
-
-        # Foreground
-        screen.blit(self.title.image, (self.title.rect.x, self.title.rect.y))
-        screen.blit(self.score.image, (self.score.rect.x, self.score.rect.y))
-        screen.blit(self.pushspace.image, (self.pushspace.rect.x, self.pushspace.rect.y))
+        return self.gameover_all.draw(screen)  #FIXME bg
 
 
-class BackgroundGameover():
+class BackgroundGameover(pygame.sprite.DirtySprite):
     """Background fades in when a player loses"""
 
-    def __init__(self, win):
+    def __init__(self, win, lastscreen):
+        pygame.sprite.DirtySprite.__init__(self, self.containers)
+        self.dirty = 2
+
         if win:
             self.image = self.winimage
         else:
@@ -62,6 +62,8 @@ class BackgroundGameover():
         self.speed = 3
         self.opaque_lg = 255
         self.speed_lg = -30
+
+        self.lastgame_image = lastscreen
 
 
     def update(self):
@@ -91,7 +93,7 @@ class BackgroundGameover():
         self.image = newsurf
 
 
-class TitleGameover(StringObjectBase):
+class TitleGameover(StringSpriteBase):
 
     y = 100
     text = 'GAME OVER'
@@ -99,7 +101,7 @@ class TitleGameover(StringObjectBase):
     fontsize = 80
     
     def __init__(self):
-        StringObjectBase.__init__(self)
+        StringSpriteBase.__init__(self)
 
         self.original_image = self.image.copy()
         self.opaque = 10
@@ -116,17 +118,19 @@ class TitleGameover(StringObjectBase):
         set_transparency_to_surf(self.image, self.opaque)
 
 
-class ScoreGameover(StringObjectBase):
+class ScoreGameover(StringSpriteBase):
 
     y = 300
     text = 'Score: {0}'
     color = (128, 128, 128)
     fontsize = 60
 
-    def __init__(self):
-        StringObjectBase.__init__(self)
+    def __init__(self, score):
+        StringSpriteBase.__init__(self)
         self.opaque = 10
         self.speed = 2
+
+        self.score = score
 
     def update(self):
         self.original_image = self.font.render(self.text.format(self.score), True, self.color)

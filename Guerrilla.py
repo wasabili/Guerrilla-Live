@@ -38,10 +38,7 @@ class Guerrilla(object):
             self.update()
             dirty = self.draw(self._screen)
             self.debug(self._screen, str(clock.get_fps()))  #FIXME
-            if dirty is None:
-                pygame.display.flip()
-            else:
-                pygame.display.update(dirty)
+            pygame.display.update(dirty)
             self.key_handler()
             self.triggerstatechange()
 
@@ -179,7 +176,7 @@ class Guerrilla(object):
     def entergameover(self):
         """prepare to enter gameover screen"""
 
-        self.gamedata.set_lastscreen(self._screen.copy())
+        self.gamedata.lastscreen = self._screen.copy()
         self.gameoverdraw = GameoverDraw(self.gamedata)
         self.pendingchangestate(GAMEOVER)
 
@@ -213,7 +210,7 @@ class Guerrilla(object):
         Player.images                   = load_image("player.png", 480)
         Shot.shot_image                 = load_image("shot.png")
         EColi.images                    = load_image("ecoli.png", 3)
-        EColi2.image                    = load_image("ecoli2.png")
+        EColi2.images                   = load_image("ecoli2.png", 2)
         BigEColi.image                  = load_image("big-ecoli.png")  #FIXME FIXME
         Explosion.images                = load_image("explosion.png", 16)
         HeartMark.images                = load_image("heart-animation.png", 96)
@@ -348,12 +345,6 @@ class GameData(object):
 
     def is_bosslimit_broken(self):  #FIXME
         return self.killed >= self.bosslimit
-
-    def set_lastscreen(self, surface):
-        self.lastscreen = surface
-
-    def get_lastscreen(self):
-        return self.lastscreen
 
 
 

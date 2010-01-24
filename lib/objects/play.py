@@ -49,6 +49,7 @@ class PlayDraw():
         self.bosses     = pygame.sprite.Group()                   # Bosses Group
 
         # Assign default sprite groups
+        BackgroundPlay.containers   = self.play_all
         Player.containers           = self.play_all
         EColi.containers            = self.play_all, self.enemies
         EColi2.containers           = self.play_all, self.enemies
@@ -60,11 +61,13 @@ class PlayDraw():
         WeaponPanel.containers      = self.play_all
 
         # Create recycle boxes
-        EColi.recyclebox    = deque()
-        EColi2.recyclebox   = deque()
-        Shot.recyclebox     = deque()
+        EColi.recyclebox        = deque()
+        EColi2.recyclebox       = deque()
+        Shot.recyclebox         = deque()
+        Explosion.recyclebox    = deque()
 
         # Set Layer
+        BackgroundPlay._layer   = -100
         Player._layer           = 100
         HeartMark._layer        = 200
         Explosion._layer        = 100
@@ -86,15 +89,14 @@ class PlayDraw():
         self.shot_reload_timer = 0
 
     def update(self):
-        self.bg_play.update()
         self.play_all.update()
 
+        # Manage game system
         self.manage_weapon_system()
         self.manage_enemies()
 
     def draw(self, screen):
-        screen.blit(self.bg_play.image, (self.bg_play.rect.x, self.bg_play.rect.y))     # Background
-        self.play_all.draw(screen)                                                      # Objects
+        return self.play_all.draw(screen)
 
     def manage_weapon_system(self):
         """ Manage Weapon System"""
@@ -218,7 +220,7 @@ class PlayDraw():
             if not enemy.hit_once():
                 enemy.kill()                    # Kill an enemy
                 self.gamedata.killed_enemies(1)       # FIXME
-                Explosion(shots[0].rect.center) # Draw explosion
+                recycle_or_gen_object(Explosion, shots[0].rect.center) # Draw explosion
 
         """ Between player and E.Colis """
         player_collided = pygame.sprite.spritecollide(self.player, self.enemies, True)
@@ -255,12 +257,13 @@ class PlayDraw():
         return self.gameover
 
 
-class BackgroundPlay():
+class BackgroundPlay(pygame.sprite.Sprite):
     """Background follows player's move"""
 
     mag = 0.2
 
     def __init__(self, level):
+        pygame.sprite.Sprite.__init__(self, self.containers)
 
         magged_size = (int(SCR_RECT.width*(1+self.mag)), int(SCR_RECT.height*(1+self.mag)))
 
@@ -571,10 +574,13 @@ class EColi2(pygame.sprite.Sprite):
     start_hp = 3
     speed = 0.4  # 移動速度
 
+    animecycle = 10
+
     def __init__(self, pos):
         pygame.sprite.Sprite.__init__(self, self.containers)
 
-        self.original_image = self.image.copy()
+        self.image = self.images[0]
+        self.original_image = self.images[0]
         self.rect = self.image.get_rect()
         self.rect.center = pos
 
@@ -582,6 +588,8 @@ class EColi2(pygame.sprite.Sprite):
         self.fpx = float(self.rect.x)
         self.fpy = float(self.rect.y)
 
+        self.frame = 0
+        self.blink_timer = 0
         self.hp = self.start_hp
 
     def init(self, pos):
@@ -591,10 +599,22 @@ class EColi2(pygame.sprite.Sprite):
         self.fpy = float(self.rect.y)
         self.hp = self.start_hp
 
+        self.original_image = self.images[0]
+        self.blink_timer = 0
+        self.frame = 0
+
         # reborn
         self.add(self.containers)
 
     def update(self):
+
+        if self.blink_timer > 0:
+            self.frame += 1
+            self.blink_timer -= 1
+            self.original_image = self.images[(self.frame/self.animecycle)%2]
+        elif self.blink_timer == 0:
+            self.original_image = self.images[0]
+            self.blink_timer -= 1
 
         # 終点の角度を計算
         target = player_pos
@@ -617,6 +637,7 @@ class EColi2(pygame.sprite.Sprite):
 
         # Player's shot hit me!
         self.hp -= 1
+        self.blink_timer = 40
         return self.hp > 0
 
     def kill(self):
@@ -708,12 +729,22 @@ class Explosion(pygame.sprite.Sprite):
 
         self.frame = 0
 
+    def init(self, pos):
+        self.image = self.images[0]
+        self.rect.center = pos
+        self.frame = 0
+        self.add(self.containers)
+
     def update(self):
         # Character Animation
         self.image = self.images[self.frame/self.animecycle]
         self.frame += 1
         if self.frame == self.max_frame:
             self.kill()  # disappear
+
+    def kill(self):
+        pygame.sprite.Sprite.kill(self)
+        self.__class__.recyclebox.append(self)
 
 
 #########################################################################################
