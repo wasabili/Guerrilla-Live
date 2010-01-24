@@ -31,71 +31,15 @@ class StartDraw():
         self.start_all.update()
 
     def draw(self, screen):
-        return self.start_all.draw(screen, BackgroundStart2.image)
+        return self.start_all.draw(screen, BackgroundStart.image)
 
 
-class BackgroundStart():
-    """Start Background"""
-
-    opaque = 0
-    speed = 3
-
-    def __init__(self):
-        self.original_image = self.image.copy()
-        self.rect = self.image.get_rect()
-
-    def update(self):  #FIXME
-
-        if self.opaque < 255:
-            if self.opaque + self.speed < 255:
-                self.opaque += self.speed
-            else:
-                self.opaque = 255
-
-            self.image = self.original_image.copy()
-            self.image.set_alpha(self.opaque)
-
-        else:
-            self.image = self.original_image
-
-
-class TitleStart():
-
-    y = 250
-
-    opaque = 0
-    speed = 3
-
-    def __init__(self):
-        self.rect = self.image.get_rect()
-        self.rect.x = (SCR_RECT.width - self.rect.width)/2
-        self.rect.y = self.y
-
-        self.original_image = self.image.copy()
-
-    def update(self):  #FIXME
-        if self.opaque < 255:
-            if self.opaque + self.speed < 255:
-                self.opaque += self.speed
-            else:
-                self.opaque = 255
-
-            self.image = self.original_image.copy()
-            set_transparency_to_surf(self.image, self.opaque)
-
-        else:
-            self.image = self.original_image
-
-
-class BackgroundStart2(pygame.sprite.DirtySprite):
+class BackgroundStart(pygame.sprite.DirtySprite):
     """Start Background"""
 
     def __init__(self):
         pygame.sprite.DirtySprite.__init__(self, self.containers)
         self.rect = self.image.get_rect()
-
-    def update(self):
-        pass
 
 
 class EffectStart(pygame.sprite.DirtySprite):

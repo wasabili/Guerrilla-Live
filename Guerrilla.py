@@ -210,7 +210,7 @@ class Guerrilla(object):
         """Load images"""
 
         # Register images into sprites
-        Player.images                   = load_image("player3.png", 480)
+        Player.images                   = load_image("player.png", 480)
         Shot.shot_image                 = load_image("shot.png")
         EColi.images                    = load_image("ecoli.png", 3)
         EColi2.image                    = load_image("ecoli2.png")
@@ -218,27 +218,22 @@ class Guerrilla(object):
         Explosion.images                = load_image("explosion.png", 16)
         HeartMark.images                = load_image("heart-animation.png", 96)
 
-        Gage.image_red                  = load_image("gage2.5.png")
+        Gage.image_red                  = load_image("gage-red.png")
         Gage.image_blue                 = load_image("gage-blue.png")
-        GageSeparator.image             = load_image("separator.png")
+        GageSeparator.image             = load_image("gage-separator.png")
 
         WeaponPanel.images              = [load_image("weaponpanel"+str(x)+".png") for x in range(1, 4)]
 
-        TitleStart.image                = load_image("logo.png")
         DescriptionSelect.images        = load_image("description.png", 7)  #FIXME
         HighlightSelect.image           = load_image("highlight.png")
         SidebarSelect.images            = load_image("sidebar.jpg", 7)  #FIXME
-        SidebarSelect2.images           = load_image("sidebar.jpg", 7)
-        SidebarSelect4.images           = load_image("sidebar.jpg", 7)
 
         BackgroundHelp.images           = load_image('help.png', 10)
         ContentsHelp.image              = load_image('help-contents.png')
 
         # Load background
         BackgroundStart.image           = load_image("start.jpg")
-        BackgroundStart2.image          = load_image("start2.jpg")
         BackgroundSelect.image          = load_image("select.jpg")
-        BackgroundDescription.image     = load_image("description-bg.png")
         BackgroundPlay.images           = load_image("play.jpg", 5, True)  #FIXME
         BackgroundGameover.loseimage    = load_image("lose.jpg")
         BackgroundGameover.winimage     = load_image("win.jpg")

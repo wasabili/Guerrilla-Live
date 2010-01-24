@@ -22,10 +22,8 @@ class SelectDraw():
         self.select_all = pygame.sprite.LayeredDirty()
 
         # Register groups to sprites
-        #BackgroundSelect.containers         = self.select_all
-        #BackgroundDescription.containers    = self.select_all
         DescriptionSelect.containers        = self.select_all
-        SidebarSelect4.containers           = self.select_all
+        SidebarSelect.containers            = self.select_all
         HighlightSelect.containers          = self.select_all
         BlinkerSelect.containers            = self.select_all
         ArcadeSelect.containers             = self.select_all
@@ -34,10 +32,8 @@ class SelectDraw():
         EffectSelect.containers             = self.select_all
 
         # Objects
-        #self.bg_select = BackgroundSelect()
-        #self.bg_description = BackgroundDescription()
         self.description = DescriptionSelect()
-        self.sidebar = SidebarSelect4()                     # FIXME
+        self.sidebar = SidebarSelect()                     # FIXME
         self.blinker = BlinkerSelect()
         self.highlight = HighlightSelect(self.blinker, self.description, self.sidebar)
 
@@ -69,20 +65,6 @@ class BackgroundSelect(pygame.sprite.DirtySprite):
         pygame.sprite.DirtySprite.__init__(self, self.containers)
 
         self.rect = self.image.get_rect()
-
-    def update(self):
-        pass
-
-
-class BackgroundDescription(pygame.sprite.DirtySprite):
-    """Description Background"""
-
-    def __init__(self):
-        pygame.sprite.DirtySprite.__init__(self, self.containers)
-
-        self.rect = self.image.get_rect()
-        self.rect.x = 290
-        self.rect.y = 35
 
     def update(self):
         pass
@@ -218,15 +200,15 @@ class DescriptionSelect():
 
     def __init__(self):
 
-        DescriptionPartSelect2.containers = self.containers
+        DescriptionPartSelect.containers = self.containers
         self.parts = []
-        self.parts.append(DescriptionPartSelect2(self.images[0], 0))
-        self.parts.append(DescriptionPartSelect2(self.images[1], DescriptionPartSelect.xlimit))
-        self.parts.append(DescriptionPartSelect2(self.images[2], DescriptionPartSelect.xlimit))
-        self.parts.append(DescriptionPartSelect2(self.images[3], DescriptionPartSelect.xlimit))
-        self.parts.append(DescriptionPartSelect2(self.images[4], DescriptionPartSelect.xlimit))
-        self.parts.append(DescriptionPartSelect2(self.images[5], DescriptionPartSelect.xlimit))
-        self.parts.append(DescriptionPartSelect2(self.images[6], DescriptionPartSelect.xlimit))
+        self.parts.append(DescriptionPartSelect(self.images[0], 0))
+        self.parts.append(DescriptionPartSelect(self.images[1], DescriptionPartSelect.xlimit))
+        self.parts.append(DescriptionPartSelect(self.images[2], DescriptionPartSelect.xlimit))
+        self.parts.append(DescriptionPartSelect(self.images[3], DescriptionPartSelect.xlimit))
+        self.parts.append(DescriptionPartSelect(self.images[4], DescriptionPartSelect.xlimit))
+        self.parts.append(DescriptionPartSelect(self.images[5], DescriptionPartSelect.xlimit))
+        self.parts.append(DescriptionPartSelect(self.images[6], DescriptionPartSelect.xlimit))
 
     def change(self, index, up):
         if up:
@@ -238,54 +220,6 @@ class DescriptionSelect():
 
 
 class DescriptionPartSelect(pygame.sprite.DirtySprite):
-
-    anime = 15
-    xstart = 290
-    xlimit = 800  
-
-    def __init__(self, image, x):
-        pygame.sprite.DirtySprite.__init__(self, self.containers)
-
-        self.image = image
-        self.original_image = self.image.copy()
-        self.none_image = pygame.Surface((0,0), SRCALPHA|HWSURFACE)
-        self.rect = self.image.get_rect()
-        self.rect.x = self.xstart
-        self.rect.y = 35
-
-        self.x = x
-        self.vx = 0
-        self.speed = self.xlimit/self.anime
-
-    def change_speed(self, direction):
-        self.vx = direction*self.speed
-
-    def update(self):
-
-        if self.vx == 0:
-            if self.x != 0:
-                self.image = self.none_image
-            else:
-                self.image = self.original_image
-
-        else:
-            self.dirty = 1
-            self.image = self.original_image.copy()
-            set_transparency_to_surf(self.image, (self.xlimit-self.x)*225/self.xlimit)
-            self.rect.x = self.xstart + self.x
-
-            n = self.x + self.vx
-            if n < 0:
-                self.x = 0
-                self.vx = 0
-            elif n > self.xlimit:
-                self.x = self.xlimit
-                self.vx = 0
-            else:
-                self.x = n
-
-
-class DescriptionPartSelect2(pygame.sprite.DirtySprite):
 
     anime = 15
     xstart = 290
@@ -325,158 +259,6 @@ class DescriptionPartSelect2(pygame.sprite.DirtySprite):
 
 
 class SidebarSelect(pygame.sprite.DirtySprite):
-
-    anime = 15
-    timer = 0
-  
-    def __init__(self):
-        self.dirty = 2
-        pygame.sprite.DirtySprite.__init__(self, self.containers)
-
-        self.image = self.images[0]
-        self.rect = self.image.get_rect()
-        self.rect.center = (100, SCR_RECT.height/2)
-
-        self.speed = SCR_RECT.height/self.anime
-
-        self.order = []
-        for i, image in enumerate(self.images):
-            y = 0 if i == 0 else SCR_RECT.height
-            self.order.append([image, y, 0])
-
-    def change(self, index, up):
-        if up:
-            self.order[index+1][2] = self.speed  # add animation
-        else:
-            self.order[index][2] = -self.speed  # add animation
-
-    def update(self):
-
-        newsurf = pygame.Surface((300, SCR_RECT.height))
-        newsurf.fill((0,0,0))
-
-        for i, (image, fpy, fpvy) in enumerate(self.order):
-
-            newsurf.blit(image, (0,int(fpy)))
-
-            if fpvy < 0:
-                fpy = max(fpy + fpvy, 0)
-                self.order[i][1] = fpy
-                if fpy == 0:
-                    self.order[i][2] = 0
-            elif fpvy > 0:
-                fpy = min(fpy + fpvy, SCR_RECT.height)
-                self.order[i][1] = fpy
-                if fpy == SCR_RECT.height:
-                    self.order[i][2] = 0
-
-        self.image = newsurf
-
-
-class SidebarSelect2(pygame.sprite.DirtySprite):
- 
-    speed = 15
-
-    def __init__(self):
-        pygame.sprite.DirtySprite.__init__(self, self.containers)
- 
-        self.image = self.images[0].copy()
-        self.rect = self.image.get_rect()
-        self.rect.topleft = (-50, 0)
- 
-        self.oldindex = 0
-        self.newindex = 0
- 
-        self.starty = SCR_RECT.height
-        self.opaque = 0
-        self.frame = 0
- 
-    def change(self, index, up):
-        self.oldindex = self.newindex       # Sync
-        self.newindex = index
-        self.opaque = 0
- 
-    def update(self):
- 
-        if self.oldindex != self.newindex:              # Animation has not finished
-            self.ditry = 1
-
-            if self.opaque < 255:
-                dummy = self.images[self.newindex].copy()
-                dummy.set_alpha(self.opaque)
-
-                self.image = self.images[self.oldindex].copy()
-                self.image.blit(dummy, (0, 0))
-
-                if self.opaque + self.speed >= 255:
-                    self.opaque = 255
-                else:
-                    self.opaque += self.speed
-
-            elif self.opaque == 255:
-                self.oldindex = self.newindex
-
-                self.image = self.images[self.newindex]
- 
-
-class SidebarSelect3(pygame.sprite.DirtySprite):
-
-    def __init__(self):
-
-        SidebarPartSelect.containers = self.containers
-        self.parts = []
-        self.parts.append(SidebarPartSelect(self.images[0], 255))
-        self.parts.append(SidebarPartSelect(self.images[1], 0))
-        self.parts.append(SidebarPartSelect(self.images[2], 0))
-        self.parts.append(SidebarPartSelect(self.images[3], 0))
-        self.parts.append(SidebarPartSelect(self.images[4], 0))
-        self.parts.append(SidebarPartSelect(self.images[5], 0))
-        self.parts.append(SidebarPartSelect(self.images[6], 0))
-
-    def change(self, index, up):
-        self.parts[index].change()
-
-
-class SidebarPartSelect(pygame.sprite.DirtySprite):
- 
-    speed = 15
-
-    def __init__(self, image, opaque):
-        pygame.sprite.DirtySprite.__init__(self, self.containers)
- 
-        self.image = image
-        self.original_image = self.image.copy()
-        self.rect = self.image.get_rect()
-        self.rect.center = (100, SCR_RECT.height/2)
- 
-        self.starty = SCR_RECT.height
-        self.opaque = opaque
-        self.opaquespeed = 0
- 
-    def change(self):
-        self.opaquespeed = self.speed
-        self.opaque = 0      
- 
-    def update(self):
- 
-        if self.opaque == 0:
-
-            pass
-        else:
-
-            self.image = self.original_image.copy()
-            self.image.set_alpha(self.opaque)
-
-            if self.opaque + self.speed > 255:
-                self.opaque = 255
-                self.image = self.original_image.copy()
-                self.dirty = 0
-                self.opaquespeed = 0
-            else:
-                self.opaque += self.speed
-
-
-class SidebarSelect4(pygame.sprite.DirtySprite):
  
     speed = 5
 
