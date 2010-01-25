@@ -59,6 +59,7 @@ class PlayDraw():
         HeartMark.containers        = self.play_all
         Gage.containers             = self.play_all
         WeaponPanel.containers      = self.play_all
+        DisplayWeapon.containers    = self.play_all
 
         # Create recycle boxes
         EColi.recyclebox        = deque()
@@ -75,11 +76,13 @@ class PlayDraw():
         GageMask._layer         = 201
         GageSeparator._layer    = 202
         WeaponPanel._layer      = 200
+        DisplayWeapon._layer    = 200
 
         self.player = Player()
         self.bg_play = BackgroundPlay(gamedata.level)
         self.gage = Gage(gamedata)
         self.weaponpanel = WeaponPanel()
+        self.dispweapon = DisplayWeapon()
 
         self.gamedata = gamedata
         self.boss = None
@@ -105,30 +108,40 @@ class PlayDraw():
             counter = self.gamedata.subweapon_counter
 
             # Weapon Panels
-            if counter*3 >= self.gamedata.gage_limit:
-                self.weaponpanel.set_enable(0, True)
-            if counter*3 >= self.gamedata.gage_limit*2:
-                self.weaponpanel.set_enable(1, True)
             if counter >= self.gamedata.gage_limit:
+                self.weaponpanel.set_enable(0, True)
+                self.weaponpanel.set_enable(1, True)
                 self.weaponpanel.set_enable(2, True)
+            elif counter*3 >= self.gamedata.gage_limit*2:
+                self.weaponpanel.set_enable(0, True)
+                self.weaponpanel.set_enable(1, True)
+                self.weaponpanel.set_enable(2, False)
+            elif counter*3 >= self.gamedata.gage_limit:
+                self.weaponpanel.set_enable(0, True)
+                self.weaponpanel.set_enable(1, False)
+                self.weaponpanel.set_enable(2, False)
 
             # Select
             pressed_keys = pygame.key.get_pressed()
-            if pressed_keys[K_b] and self.weaponpanel.get_enable(0):
-                self.gamedata.weapon_mode = self.gamedata.SUBSHOT
-                self.gamedata.subweapon_limiter = counter - self.gamedata.gage_limit/3
-                self.weaponpanel.set_enable(1, False)
-                self.weaponpanel.set_enable(2, False)
-            elif pressed_keys[K_v] and self.weaponpanel.get_enable(1):
-                self.gamedata.weapon_mode = self.gamedata.MACHINEGUN
-                self.gamedata.subweapon_limiter = counter - self.gamedata.gage_limit*2/3
-                self.weaponpanel.set_enable(0, False)
-                self.weaponpanel.set_enable(2, False)
-            elif pressed_keys[K_c] and self.weaponpanel.get_enable(2):
-                self.gamedata.weapon_mode = self.gamedata.BOMB
-                self.gamedata.subweapon_limiter = 0
-                self.weaponpanel.set_enable(0, False)
-                self.weaponpanel.set_enable(1, False)
+            if pressed_keys[K_SPACE]:
+                if self.weaponpanel.get_enable(0):
+                    self.gamedata.weapon_mode = self.gamedata.SUBSHOT
+                    self.gamedata.subweapon_limiter = counter - self.gamedata.gage_limit/3
+                    self.weaponpanel.set_enable(0, False)
+                    self.weaponpanel.set_enable(1, False)
+                    self.weaponpanel.set_enable(2, False)
+                elif self.weaponpanel.get_enable(1):
+                    self.gamedata.weapon_mode = self.gamedata.MACHINEGUN
+                    self.gamedata.subweapon_limiter = counter - self.gamedata.gage_limit*2/3
+                    self.weaponpanel.set_enable(0, False)
+                    self.weaponpanel.set_enable(1, False)
+                    self.weaponpanel.set_enable(2, False)
+                elif self.weaponpanel.get_enable(2):
+                    self.gamedata.weapon_mode = self.gamedata.BOMB
+                    self.gamedata.subweapon_limiter = 0
+                    self.weaponpanel.set_enable(0, False)
+                    self.weaponpanel.set_enable(1, False)
+                    self.weaponpanel.set_enable(2, False)
 
             # Reload
             self.shot_reload_timer -= 1
@@ -312,7 +325,7 @@ class Player(pygame.sprite.Sprite):
         self.rect = Rect(0, 0, self.rect.width*3/4, self.rect.height*3/4)  #FIXME TEST
         self.rect.center = CENTER
 
-        self.hearts = [HeartMark((SCR_RECT.width - (60+60*x), SCR_RECT.height - 45)) for x in range(self.lives)]
+        self.hearts = [HeartMark((SCR_RECT.width - (60+60*x), SCR_RECT.height - (45+20))) for x in range(self.lives)]
 
         self.fpx = float(self.rect.x)
         self.fpy = float(self.rect.y)
@@ -797,7 +810,8 @@ class HeartMark(pygame.sprite.Sprite):
 class Gage(pygame.sprite.Sprite):
     """Score Gage"""
 
-    pos = (28, 18)
+    #pos = (28, 18)  #FIXME FIXME
+    pos = (28, 738)
 
     def __init__(self, gamedata):
         pygame.sprite.Sprite.__init__(self, self.containers)
@@ -812,8 +826,8 @@ class Gage(pygame.sprite.Sprite):
 
         # Separators
         GageSeparator.containers = self.containers
-        self.gagesep1 = GageSeparator((350, 19))
-        self.gagesep2 = GageSeparator((671, 19))
+        self.gagesep1 = GageSeparator((350, self.pos[1]+1))
+        self.gagesep2 = GageSeparator((671, self.pos[1]+1))
 
         self.gamedata = gamedata
         self.lastweapon = self.gamedata.SHOT
@@ -873,17 +887,15 @@ class GageSeparator(pygame.sprite.Sprite):
 
 class WeaponPanel():
 
-    y = 50
-
     def __init__(self):
         WeaponPanelPart.containers  = self.containers
         WeaponPanelPart._layer      = self._layer
 
         height = self.images[0].get_height()
         self.parts = []
-        self.parts.append(WeaponPanelPart(self.images[0], self.y+(height*3/2)*0))
-        self.parts.append(WeaponPanelPart(self.images[1], self.y+(height*3/2)*1))
-        self.parts.append(WeaponPanelPart(self.images[2], self.y+(height*3/2)*2))
+        self.parts.append(WeaponPanelPart(self.images[0], 638))
+        self.parts.append(WeaponPanelPart(self.images[1], 638-40))
+        self.parts.append(WeaponPanelPart(self.images[2], 638-40*2))
 
     def set_enable(self, index, enable):
         self.parts[index].set_enable(enable)
@@ -901,12 +913,12 @@ class WeaponPanelPart(pygame.sprite.DirtySprite):
 
         self.image = image
         self.rect = self.image.get_rect()
-        self.rect.topleft = (SCR_RECT.width, y)
+        self.rect.topright = (0, y)
 
-        self.max_x = SCR_RECT.width - 15
-        self.min_x = SCR_RECT.width - self.image.get_width()
+        self.max_x = self.image.get_width()
+        self.min_x = 0
 
-        self.x = self.max_x
+        self.x = self.min_x
         self.vx = 0
 
         self.enabled = False
@@ -917,14 +929,14 @@ class WeaponPanelPart(pygame.sprite.DirtySprite):
     def set_enable(self, enable):
         self.enabled = enable
         if enable:
-            self.vx = -self.speed
-        else:
             self.vx = self.speed
+        else:
+            self.vx = -self.speed
 
     def update(self):
         self.dirty = 1
 
-        self.rect.x = self.x
+        self.rect.right = self.x
 
         if self.vx != 0:
             self.dirty = 1
@@ -938,5 +950,16 @@ class WeaponPanelPart(pygame.sprite.DirtySprite):
                 self.vx = 0
             else:
                 self.x = n
+
+
+class DisplayWeapon(pygame.sprite.Sprite):
+
+    pos = (20, 738-70)
+
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self, self.containers)
+
+        self.rect = self.image.get_rect()
+        self.rect.topleft = self.pos
 
 

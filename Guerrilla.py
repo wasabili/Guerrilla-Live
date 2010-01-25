@@ -37,7 +37,7 @@ class Guerrilla(object):
             clock.tick(60)
             self.update()
             dirty = self.draw(self._screen)
-            self.debug(self._screen, str(clock.get_fps()))  #FIXME
+            #self.debug(self._screen, str(clock.get_fps()))  #FIXME
             pygame.display.update(dirty)
             self.key_handler()
             self.triggerstatechange()
@@ -215,6 +215,7 @@ class Guerrilla(object):
         Explosion.images                = load_image("explosion.png", 16)
         HeartMark.images                = load_image("heart-animation.png", 96)
         WeaponPanel.images              = [load_image("weaponpanel"+str(x)+".png") for x in range(1, 4)]
+        DisplayWeapon.image             = load_image("current-weapon-bg.png")
 
         # Gage
         Gage.image_red                  = load_image("gage-red.png")
