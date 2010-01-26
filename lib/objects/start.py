@@ -82,6 +82,11 @@ class PushSpaceStart(StringSpriteBase):
         StringSpriteBase.__init__(self)
 
         self.original_image = self.image.copy()
+        self.images = []
+        for i in range(256):
+            img = self.original_image.copy()
+            set_transparency_to_surf(img, i)
+            self.images.append(img)
         self.image = pygame.Surface((0,0))
         self.opaque = 0
         self.speed = 3
@@ -107,8 +112,9 @@ class PushSpaceStart(StringSpriteBase):
                     self.speed *= -1
 
             self.opaque += self.speed
-            self.image = self.original_image.copy()
-            set_transparency_to_surf(self.image, self.opaque)
+            #self.image = self.original_image.copy()
+            #set_transparency_to_surf(self.image, self.opaque)
+            self.image = self.images[self.opaque]
 
 
 

@@ -33,6 +33,8 @@ class HelpDraw():
         self.contents_help = ContentsHelp(self.cover_help)
         self.pushspace_help = PushSpaceHelp(self.cover_help)
 
+        self.base_surf = pygame.Surface(SCR_RECT.size)
+
         self.closing = False
         self.closed = False
         self.opaque = 255
@@ -40,35 +42,17 @@ class HelpDraw():
 
     def update(self):
         self.help_all.update()
+        self.closed = self.cover_help.hasclosed()
 
     def draw(self, screen):
-
-        # Background
-        screen.fill((255,255,255))
-        screen.blit(self.bg_help.image, (0,0))
-
-        # Foreground
-        newsurf = screen.copy()
-        newsurf.blit(self.cover_help.image, (self.cover_help.rect.x, self.cover_help.rect.y))
-        newsurf.blit(self.contents_help.image, (self.contents_help.rect.x, self.contents_help.rect.y))
-        newsurf.blit(self.pushspace_help.image, (self.pushspace_help.rect.x, self.pushspace_help.rect.y))
-        
-        if not self.closing:
-            screen.blit(newsurf, (0,0))
-        else:
-            if self.opaque - self.speed > 0:
-                self.opaque -= self.speed
-            else:
-                self.opaque = 0
-                self.closed = True
-            newsurf.set_alpha(self.opaque)
-            screen.blit(newsurf, (0,0))
-
-        return screen.get_rect() #FIXME
+        return self.help_all.draw(screen)
 
     def close(self):
         self.closing = True
-        self.bg_help.back()
+        self.bg_help.close()
+        self.cover_help.close()
+        self.contents_help.kill()
+        self.pushspace_help.kill()
 
     def whileclosing(self):
         return self.closing
@@ -81,6 +65,7 @@ class BackgroundHelp(pygame.sprite.DirtySprite):
 
     def __init__(self):
         pygame.sprite.DirtySprite.__init__(self, self.containers)
+        self.dirty = 2
 
         self.index = 0
         self.image = self.images[self.index]
@@ -108,7 +93,7 @@ class BackgroundHelp(pygame.sprite.DirtySprite):
             self.frame -= 1
             
 
-    def back(self):
+    def close(self):
         self.goforward = False
         self.frame = len(self.images)
         self.cycle = 1
@@ -121,12 +106,15 @@ class CoverHelp(pygame.sprite.DirtySprite):
 
     def __init__(self):
         pygame.sprite.DirtySprite.__init__(self, self.containers)
+        self.dirty = 2
 
         self.rect = None
         self.frame = 0
         self.state = self.ENTER
         self.step = self.FIRST
         self.speed = 30
+        self.opaque = 128
+        self.opaque_speed = 10
         self.wait = 10
         self.fpx = SCR_RECT.width/2.0-3
         self.fpy = SCR_RECT.height/2.0-3
@@ -158,12 +146,17 @@ class CoverHelp(pygame.sprite.DirtySprite):
         elif self.state == self.SHOW:
             self.fpx = 0
             self.fpy = 0 
+        elif self.state == self.EXIT:
+            self.fpx = 0
+            self.fpy = 0
+            self.opaque = max(self.opaque - self.opaque_speed, 0)
+
 
         width = int(SCR_RECT.width-self.fpx*2)
         height = int(SCR_RECT.height-self.fpy*2)
         newsurf = pygame.Surface((width, height))
         newsurf = newsurf.convert_alpha()
-        newsurf.fill((0,0,0,128))
+        newsurf.fill((0,0,0,self.opaque))
 
         self.image = newsurf
         self.rect = self.image.get_rect()
@@ -172,12 +165,19 @@ class CoverHelp(pygame.sprite.DirtySprite):
     def isshowstate(self):
         return self.state == self.SHOW
 
+    def close(self):
+        self.state = self.EXIT
+
+    def hasclosed(self):
+        return self.state == self.EXIT and self.opaque == 0
 
 class ContentsHelp(pygame.sprite.DirtySprite):
     
     def __init__(self, cover_help):
         pygame.sprite.DirtySprite.__init__(self, self.containers)
+        self.dirty = 2
 
+        self.none_image = pygame.Surface((0,0))
         self.rect = self.image.get_rect()
         self.cover_help = cover_help
 
@@ -187,8 +187,8 @@ class ContentsHelp(pygame.sprite.DirtySprite):
         if self.cover_help.isshowstate():
             self.image = self.original_image
         else:
-            self.image = pygame.Surface(SCR_RECT.size, SRCALPHA)
-            self.image.fill((0,0,0,0))
+            self.image = self.none_image
+            self.rect = self.image.get_rect()
 
 
 class PushSpaceHelp(PushSpaceStart):
