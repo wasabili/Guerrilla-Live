@@ -149,14 +149,11 @@ class ScoreGameover(StringSpriteBase):
 class PushSpaceGameover(PushSpaceStart):
 
     y = 600
-    frame = 0
     color = (128, 128, 128)
 
     def __init__(self):
         PushSpaceStart.__init__(self)
-        self.image = pygame.Surface((0, 0))
         self.opaque = 100
         self.speed = 7
-        self.min_opaque = 55
 
 

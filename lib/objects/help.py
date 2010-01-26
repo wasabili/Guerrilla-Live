@@ -3,10 +3,12 @@
 
 import pygame
 from pygame.locals import *
+import sys
 
 from lib.constants  import *
 from lib.utils      import set_transparency_to_surf
 from base           import *
+from start          import PushSpaceStart
             
 #########################################################################################
 #                     HELP ANIMATION                                                    #
@@ -189,46 +191,18 @@ class ContentsHelp(pygame.sprite.DirtySprite):
             self.image.fill((0,0,0,0))
 
 
-class PushSpaceHelp(StringSpriteBase):
+class PushSpaceHelp(PushSpaceStart):
 
     y = 690
-    text = 'PUSH SPACE KEY'
-    frame = 0
-    color = (255, 255, 255)
-    fontsize = 40
 
     def __init__(self, cover_help):
-        StringSpriteBase.__init__(self)
+        PushSpaceStart.__init__(self)
 
-        self.original_image = self.image.copy()
-
-        self.opaque = 0
-        self.speed = 3
-        self.min_opaque = 55
-        self.max_opaque = 255
-        self.frame = 0
-        self.blink = False
-
+        self.wait = sys.maxint
         self.cover_help = cover_help
 
     def update(self):
-        if not self.cover_help.isshowstate():
-
-            self.image = pygame.Surface(self.original_image.get_size()).convert_alpha()
-            self.image.fill((0,0,0,0))
-            self.frame += 1
-
-        else:
-            if not self.blink:
-                if self.opaque + self.speed > self.max_opaque:
-                    self.speed *= -1
-                    self.blink = True
-
-            else:
-                if self.opaque+self.speed < self.min_opaque or self.opaque+self.speed > self.max_opaque:
-                    self.speed *= -1
-
-            self.opaque += self.speed
-            self.image = self.original_image.copy()
-            set_transparency_to_surf(self.image, self.opaque)
+        if self.cover_help.isshowstate():
+            self.wait = -1
+        PushSpaceStart.update(self)
 
