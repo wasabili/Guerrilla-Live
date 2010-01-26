@@ -16,9 +16,16 @@ from base           import *
 class HelpDraw():
 
     def __init__(self):
+        # Sprite Group
+        self.help_all = pygame.sprite.LayeredDirty()
 
-        self.get_bg = True
+        # Register groups to sprites
+        BackgroundHelp.containers   = self.help_all
+        CoverHelp.containers        = self.help_all
+        ContentsHelp.containers     = self.help_all
+        PushSpaceHelp.containers    = self.help_all
 
+        # Objects
         self.bg_help = BackgroundHelp()
         self.cover_help = CoverHelp()
         self.contents_help = ContentsHelp(self.cover_help)
@@ -30,11 +37,7 @@ class HelpDraw():
         self.speed = 30
 
     def update(self):
-
-        self.bg_help.update()
-        self.cover_help.update()
-        self.contents_help.update()
-        self.pushspace_help.update()
+        self.help_all.update()
 
     def draw(self, screen):
 
@@ -59,6 +62,8 @@ class HelpDraw():
             newsurf.set_alpha(self.opaque)
             screen.blit(newsurf, (0,0))
 
+        return screen.get_rect() #FIXME
+
     def close(self):
         self.closing = True
         self.bg_help.back()
@@ -70,9 +75,11 @@ class HelpDraw():
         return self.closed
 
 
-class BackgroundHelp():
+class BackgroundHelp(pygame.sprite.DirtySprite):
 
     def __init__(self):
+        pygame.sprite.DirtySprite.__init__(self, self.containers)
+
         self.index = 0
         self.image = self.images[self.index]
         self.rect = SCR_RECT
@@ -105,12 +112,14 @@ class BackgroundHelp():
         self.cycle = 1
         
 
-class CoverHelp():
+class CoverHelp(pygame.sprite.DirtySprite):
 
     ENTER, SHOW, EXIT = range(3)
     FIRST, SECOND, WAIT = range(3)
 
     def __init__(self):
+        pygame.sprite.DirtySprite.__init__(self, self.containers)
+
         self.rect = None
         self.frame = 0
         self.state = self.ENTER
@@ -162,9 +171,11 @@ class CoverHelp():
         return self.state == self.SHOW
 
 
-class ContentsHelp():
+class ContentsHelp(pygame.sprite.DirtySprite):
     
     def __init__(self, cover_help):
+        pygame.sprite.DirtySprite.__init__(self, self.containers)
+
         self.rect = self.image.get_rect()
         self.cover_help = cover_help
 
@@ -178,7 +189,7 @@ class ContentsHelp():
             self.image.fill((0,0,0,0))
 
 
-class PushSpaceHelp(StringObjectBase):
+class PushSpaceHelp(StringSpriteBase):
 
     y = 690
     text = 'PUSH SPACE KEY'
@@ -187,7 +198,8 @@ class PushSpaceHelp(StringObjectBase):
     fontsize = 40
 
     def __init__(self, cover_help):
-        StringObjectBase.__init__(self)
+        StringSpriteBase.__init__(self)
+
         self.original_image = self.image.copy()
 
         self.opaque = 0
