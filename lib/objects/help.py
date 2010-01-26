@@ -33,12 +33,10 @@ class HelpDraw():
         self.contents_help = ContentsHelp(self.cover_help)
         self.pushspace_help = PushSpaceHelp(self.cover_help)
 
-        self.base_surf = pygame.Surface(SCR_RECT.size)
+        self.base_surf = pygame.Surface(SCR_RECT.size, HWSURFACE)
 
         self.closing = False
         self.closed = False
-        self.opaque = 255
-        self.speed = 30
 
     def update(self):
         self.help_all.update()
@@ -154,8 +152,7 @@ class CoverHelp(pygame.sprite.DirtySprite):
 
         width = int(SCR_RECT.width-self.fpx*2)
         height = int(SCR_RECT.height-self.fpy*2)
-        newsurf = pygame.Surface((width, height))
-        newsurf = newsurf.convert_alpha()
+        newsurf = pygame.Surface((width, height), SRCALPHA|HWSURFACE)
         newsurf.fill((0,0,0,self.opaque))
 
         self.image = newsurf
@@ -170,6 +167,7 @@ class CoverHelp(pygame.sprite.DirtySprite):
 
     def hasclosed(self):
         return self.state == self.EXIT and self.opaque == 0
+
 
 class ContentsHelp(pygame.sprite.DirtySprite):
     

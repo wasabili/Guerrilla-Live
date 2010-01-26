@@ -122,21 +122,28 @@ class PlayDraw():
                 self.weaponpanel.set_enable(2, False)
 
             # Select
+            if pygame.mouse.get_pressed()[2]:
+                self.weaponpanel.select_next()
+
+            # Launch
             pressed_keys = pygame.key.get_pressed()
             if pressed_keys[K_SPACE]:
-                if self.weaponpanel.get_enable(0):
+                selection = self.weaponpanel.get_selected()
+                if selection == -1:
+                    pass
+                elif selection == 0:
                     self.gamedata.weapon_mode = self.gamedata.SUBSHOT
                     self.gamedata.subweapon_limiter = counter - self.gamedata.gage_limit/3
                     self.weaponpanel.set_enable(0, False)
                     self.weaponpanel.set_enable(1, False)
                     self.weaponpanel.set_enable(2, False)
-                elif self.weaponpanel.get_enable(1):
+                elif selection == 1:
                     self.gamedata.weapon_mode = self.gamedata.MACHINEGUN
                     self.gamedata.subweapon_limiter = counter - self.gamedata.gage_limit*2/3
                     self.weaponpanel.set_enable(0, False)
                     self.weaponpanel.set_enable(1, False)
                     self.weaponpanel.set_enable(2, False)
-                elif self.weaponpanel.get_enable(2):
+                elif selection == 2:
                     self.gamedata.weapon_mode = self.gamedata.BOMB
                     self.gamedata.subweapon_limiter = 0
                     self.weaponpanel.set_enable(0, False)
@@ -887,21 +894,46 @@ class GageSeparator(pygame.sprite.Sprite):
 
 class WeaponPanel():
 
+    pos = (638, 638-40, 638-40*2)
+
     def __init__(self):
         WeaponPanelPart.containers  = self.containers
         WeaponPanelPart._layer      = self._layer
 
-        height = self.images[0].get_height()
         self.parts = []
-        self.parts.append(WeaponPanelPart(self.images[0], 638))
-        self.parts.append(WeaponPanelPart(self.images[1], 638-40))
-        self.parts.append(WeaponPanelPart(self.images[2], 638-40*2))
+        self.parts.append(WeaponPanelPart(self.images[0], self.pos[0]))
+        self.parts.append(WeaponPanelPart(self.images[1], self.pos[1]))
+        self.parts.append(WeaponPanelPart(self.images[2], self.pos[2]))
+
+        WeaponSelector.containers   = self.containers
+        WeaponSelector._layer       = self._layer
+
+        self.selector = WeaponSelector()
+        self.selection = -1
 
     def set_enable(self, index, enable):
         self.parts[index].set_enable(enable)
+        if not enable and index == self.selection:
+            self.select_next()
 
     def get_enable(self, index):
         return self.parts[index].get_enable()
+
+    def select_next(self):
+        print 'called: select_next()'
+        for i in range(1, 4):
+            self.selection = (self.selection+1)%3
+            if self.get_enable(self.selection):
+                print 'selected: '+str(self.selection)
+                self.selector.change(self.pos[self.selection])
+                break        
+        else:
+            print 'none is selected'
+            self.selection = -1
+            self.selector.hide()
+
+    def get_selected(self):
+        return self.selection
 
 
 class WeaponPanelPart(pygame.sprite.DirtySprite):
@@ -952,6 +984,43 @@ class WeaponPanelPart(pygame.sprite.DirtySprite):
                 self.x = n
 
 
+class WeaponSelector(pygame.sprite.DirtySprite):
+
+    animecycle = 4
+    x = 160
+
+    def __init__(self):
+        pygame.sprite.DirtySprite.__init__(self, self.containers)
+        self.dirty = 2
+
+        # Create images
+        self.arrow_dark = self.image.copy()
+        self.arrow_none = pygame.Surface((0,0), HWSURFACE)
+
+        self.rect = self.image.get_rect()
+        self.image = self.arrow_none
+        self.frame = 0
+        self.visible = False
+
+    def update(self):
+
+        if self.visible:
+            if self.frame/self.animecycle%2 == 0:
+                self.image = self.arrow_dark
+            else:
+                self.image = self.arrow_none
+            self.frame += 1
+
+    def change(self, y):
+
+        self.rect.x = self.x
+        self.rect.y = y
+        self.visible = True
+
+    def hide(self):
+        self.image = self.arrow_none
+        self.visible = False
+
 class DisplayWeapon(pygame.sprite.Sprite):
 
     pos = (20, 738-70)
@@ -961,5 +1030,6 @@ class DisplayWeapon(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect()
         self.rect.topleft = self.pos
+
 
 
