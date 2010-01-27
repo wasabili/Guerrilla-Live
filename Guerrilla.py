@@ -216,7 +216,7 @@ class Guerrilla(object):
         HeartMark.images                = load_image("heart-animation.png", 96)
         WeaponPanel.images              = [load_image("weaponpanel"+str(x)+".png") for x in range(1, 4)]
         WeaponSelector.image            = load_image("weapon-selector-arrow.png")
-        DisplayWeapon.image             = load_image("current-weapon-bg.png")
+        DisplayWeapon.images            = [load_image("current-weapon"+str(x)+".png") for x in range(1, 5)]
 
         # Gage
         Gage.image_red                  = load_image("gage-red.png")

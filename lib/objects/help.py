@@ -171,12 +171,15 @@ class CoverHelp(pygame.sprite.DirtySprite):
 
 class ContentsHelp(pygame.sprite.DirtySprite):
     
+    pos = (74, 74)
+
     def __init__(self, cover_help):
         pygame.sprite.DirtySprite.__init__(self, self.containers)
         self.dirty = 2
 
         self.none_image = pygame.Surface((0,0))
         self.rect = self.image.get_rect()
+        self.rect.topleft = self.pos
         self.cover_help = cover_help
 
         self.original_image = self.image.copy()
@@ -187,6 +190,7 @@ class ContentsHelp(pygame.sprite.DirtySprite):
         else:
             self.image = self.none_image
             self.rect = self.image.get_rect()
+            self.rect.topleft = self.pos
 
 
 class PushSpaceHelp(PushSpaceStart):
