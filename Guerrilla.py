@@ -211,7 +211,7 @@ class Guerrilla(object):
         Shot.shot_image                 = load_image("shot.png")
         EColi.images                    = load_image("ecoli.png", 3)
         EColi2.images                   = load_image("ecoli2.png", 2)
-        BigEColi.image                  = load_image("big-ecoli.png")  #FIXME FIXME
+        BigEColi.images                  = load_image("big-ecoli.png", 2)  #FIXME FIXME
         Explosion.images                = load_image("explosion.png", 16)
         HeartMark.images                = load_image("heart-animation.png", 96)
         WeaponPanel.images              = [load_image("weaponpanel"+str(x)+".png") for x in range(1, 4)]

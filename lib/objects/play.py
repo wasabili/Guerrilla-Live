@@ -638,7 +638,6 @@ class EColi2(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self, self.containers)
 
         self.image = self.images[0]
-        self.original_image = self.images[0]
         self.rect = self.image.get_rect()
         self.rect.center = pos
 
@@ -647,7 +646,7 @@ class EColi2(pygame.sprite.Sprite):
         self.fpy = float(self.rect.y)
 
         self.frame = 0
-        self.blink_timer = 0
+        self.blink_timer = -1
         self.hp = self.start_hp
 
     def init(self, pos):
@@ -657,7 +656,6 @@ class EColi2(pygame.sprite.Sprite):
         self.fpy = float(self.rect.y)
         self.hp = self.start_hp
 
-        self.original_image = self.images[0]
         self.blink_timer = 0
         self.frame = 0
 
@@ -669,10 +667,12 @@ class EColi2(pygame.sprite.Sprite):
         if self.blink_timer > 0:
             self.frame += 1
             self.blink_timer -= 1
-            self.original_image = self.images[(self.frame/self.animecycle)%2]
+            self.image = self.images[(self.frame/self.animecycle)%2]
         elif self.blink_timer == 0:
-            self.original_image = self.images[0]
+            self.image = self.images[0]
             self.blink_timer -= 1
+        else:
+            self.image = self.images[0]
 
         # 終点の角度を計算
         target = player_pos
@@ -680,8 +680,7 @@ class EColi2(pygame.sprite.Sprite):
         direction = math.atan2(target[1]-start[1], target[0]-start[0])
 
         # rotate
-        self.image = self.original_image.copy()
-        self.image = pygame.transform.rotate(self.image, -180*direction/math.pi)
+        self.image = pygame.transform.rotate(self.image.copy(), -180*direction/math.pi)
 
         # Move
         fpvx = math.cos(direction) * self.speed
@@ -708,8 +707,8 @@ class BigEColi(pygame.sprite.Sprite):
 
     speed = 2  # 移動速度
     hp = 100
-    animecycle = 2
-    frame = 180
+    animecycle = 10
+    angle = 180
     animechap = 0
     roundr = 100
     point1 = (150, SCR_RECT.height/2)
@@ -719,8 +718,9 @@ class BigEColi(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self, self.containers)
 
+        self.image = self.images[0]
         self.rect = self.image.get_rect()
-        self.rect = Rect(self.rect.width*1/8, self.rect.height*1/8, self.rect.width*3/4, self.rect.height*3/4)  #FIXME test
+        self.rect = Rect(self.rect.width*1/8, self.rect.height*1/8, self.rect.width*3/4, self.rect.height*3/4)  #TODO test
         self.rect.center = (-self.rect.width/2, -self.rect.height/2)
 
         # Calculate speed
@@ -739,7 +739,22 @@ class BigEColi(pygame.sprite.Sprite):
         # Calculate Angular Velocity
         self.av = self.speed/(2*math.pi*self.roundr/360.0)
 
+        self.frame = 0
+        self.blink_timer = -1
+
     def update(self):
+
+        # Blinking
+        if self.blink_timer > 0:
+            self.frame += 1
+            self.blink_timer -= 1
+            self.image = self.images[(self.frame/self.animecycle)%2]
+        elif self.blink_timer == 0:
+            self.image = self.images[0]
+            self.blink_timer -= 1
+        else:
+            self.image = self.images[0]
+
 
         if self.animechap == 0:
 
@@ -752,17 +767,18 @@ class BigEColi(pygame.sprite.Sprite):
 
         elif self.animechap == 1:
 
-            vx = math.cos(self.frame/180.0*math.pi) * self.roundr
-            vy = math.sin(self.frame/180.0*math.pi) * self.roundr
+            vx = math.cos(self.angle/180.0*math.pi) * self.roundr
+            vy = math.sin(self.angle/180.0*math.pi) * self.roundr
 
             self.rect.center = (int(self.point2[0] + vx), int(self.point2[1] - vy))
 
-            self.frame += self.av
+            self.angle += self.av
             
     def hit(self, p):
 
         # Player's shot hit me!
         self.hp -= p
+        self.blink_timer = 40
         return self.hp > 0
 
 
