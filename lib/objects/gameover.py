@@ -90,31 +90,6 @@ class BackgroundGameover(pygame.sprite.DirtySprite):
         self.image = newsurf
 
 
-class TitleGameover(StringSpriteBase):
-
-    y = 100
-    text = 'GAME OVER'
-    color = (128, 128, 128)
-    fontsize = 80
-    
-    def __init__(self):
-        StringSpriteBase.__init__(self)
-
-        self.original_image = self.image.copy()
-        self.opaque = 10
-        self.speed = 2
-
-    def update(self):
-        if self.opaque < 255:
-            if self.opaque + self.speed < 255:
-                self.opaque += self.speed
-            else:
-                self.opaque = 255
-
-        self.image = self.original_image.copy()
-        set_transparency_to_surf(self.image, self.opaque)
-
-
 class ScoreGameover(StringSpriteBase):
 
     y = 300
