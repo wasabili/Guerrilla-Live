@@ -42,6 +42,9 @@ class GameoverDraw():
 class BackgroundGameover(pygame.sprite.DirtySprite):
     """Background fades in when a player loses"""
 
+    opaque = 255
+    speed = -10
+
     def __init__(self, win, lastscreen):
         pygame.sprite.DirtySprite.__init__(self, self.containers)
         self.dirty = 2
@@ -56,37 +59,25 @@ class BackgroundGameover(pygame.sprite.DirtySprite):
         self.rect.x = 0
         self.rect.y = 0
 
-        self.opaque = 10
-        self.speed = 3
-        self.opaque_lg = 255
-        self.speed_lg = -20
-
         self.lastgame_image = lastscreen
 
-
     def update(self):
-        if self.opaque < 255:
+        if self.opaque > 0:
+
+            self.im1 = self.original_image.copy()
+            self.im2 = self.lastgame_image.copy()
+
+            self.im1.set_alpha(255-self.opaque)
+            self.im2.set_alpha(self.opaque)
+
+            self.image = pygame.Surface(SCR_RECT.size)
+            self.image.convert_alpha()
+            self.image.blit(self.im1, (0,0))
+            self.image.blit(self.im2, (0,0))
+
             self.opaque += self.speed
-            if self.opaque > 255:
-                self.opaque = 255
-
-        if self.opaque_lg > 0:
-            self.opaque_lg += self.speed_lg
-            if self.opaque_lg < 0:
-                self.opaque_lg = 0
-
-
-        self.image = self.original_image.copy()
-        self.image.set_alpha(self.opaque)
-        self.lastgame = self.lastgame_image.copy()
-        self.lastgame.set_alpha(self.opaque_lg)
-
-        newsurf = pygame.Surface((SCR_RECT.width, SCR_RECT.height))
-        newsurf.convert_alpha()
-        newsurf.blit(self.image, (0,0))
-        newsurf.blit(self.lastgame, (0,0))
-
-        self.image = newsurf
+        else:
+            self.image = self.original_image
 
 
 class ScoreGameover(StringSpriteBase):
@@ -121,6 +112,7 @@ class PushSpaceGameover(PushSpaceStart):
 
     y = 600
     color = (128, 128, 128)
+    wait = 75
 
     def __init__(self):
         PushSpaceStart.__init__(self)

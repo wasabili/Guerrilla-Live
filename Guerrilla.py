@@ -217,7 +217,6 @@ class Guerrilla(object):
         EColi2.images                   = load_image("ecoli2.png", 2)
         BigEColi.images                 = load_image("big-ecoli.png", 2)  #FIXME FIXME
         Explosion.images                = load_image("explosion.png", 16)
-        #PlayerExplosion.images          = load_image("player_explosion.png", 64) FIXME
         HeartMark.images                = load_image("heart-animation.png", 96)
         WeaponPanel.images              = [load_image("weaponpanel"+str(x)+".png") for x in range(1, 4)]
         WeaponSelector.image            = load_image("weapon-selector-arrow.png")
