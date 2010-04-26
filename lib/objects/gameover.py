@@ -28,7 +28,6 @@ class GameoverDraw():
 
         # Objects
         self.bg_gameover = BackgroundGameover(gamedata.result == gamedata.WIN, gamedata.lastscreen)
-        self.title = TitleGameover()
         self.score = ScoreGameover(gamedata.get_score())
         self.pushspace = PushSpaceGameover()
 
