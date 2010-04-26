@@ -339,7 +339,7 @@ class Player(pygame.sprite.Sprite):
     frame = 0L
     animecycle = 2
 
-    lives = 0
+    lives = 3
     hearts = []
     invincible = -1
     blink_interval = 10

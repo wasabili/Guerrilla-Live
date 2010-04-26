@@ -53,7 +53,7 @@ class Guerrilla(object):
 
         # Drawing Objects
         if first:
-            self.game_state = SELECT
+            self.game_state = CREDIT
             self.creditdraw = CreditDraw()                      # Credit Objects #FIXME destroy when it is not needed
             self.startdraw = StartDraw()                        # Start Objects
             self.selectdraw = SelectDraw()                      # Select Objects
