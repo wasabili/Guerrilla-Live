@@ -22,7 +22,6 @@ class GameoverDraw():
 
         # Register groups to sprites
         BackgroundGameover.containers       = self.gameover_all
-        TitleGameover.containers            = self.gameover_all
         ScoreGameover.containers            = self.gameover_all
         PushSpaceGameover.containers        = self.gameover_all
 
