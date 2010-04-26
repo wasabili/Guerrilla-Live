@@ -90,6 +90,7 @@ class PlayDraw():
         self.gamedata = gamedata
         self.boss = None
         self.gameover = False
+        self.gameend_timer = 150
         self.select_weapon_timer = 0
         self.bomb = None
 
@@ -99,9 +100,14 @@ class PlayDraw():
     def update(self):
         self.play_all.update()
 
+
         # Manage game system
-        self.manage_weapon_system()
-        self.manage_enemies()
+        if not self.gameover:
+            self.manage_weapon_system()
+            self.manage_enemies()
+        else:
+            self.gameend_timer -= 1
+
 
     def draw(self, screen):
         return self.play_all.draw(screen)
@@ -288,7 +294,7 @@ class PlayDraw():
             return None
 
     def hasfinished(self):
-        return self.gameover
+        return self.gameover and self.gameend_timer < 0
 
 
 class BackgroundPlay(pygame.sprite.Sprite):
@@ -333,7 +339,7 @@ class Player(pygame.sprite.Sprite):
     frame = 0L
     animecycle = 2
 
-    lives = 3
+    lives = 0
     hearts = []
     invincible = -1
     blink_interval = 10
@@ -362,12 +368,14 @@ class Player(pygame.sprite.Sprite):
             return True
 
         self.lives -= 1
-        if self.lives < 0:        # remains no life
-            return False
-        else:
+        if self.lives >= 0:
             self.hearts.pop().destroy()                 # remove one heart
             self.invincible = 300                    # invincible time
             return True
+        else:        # remains no life
+            self.player_explosion = PlayerExplosion(player_pos)
+            return False
+
 
     def is_invincible(self):
         return self.invincible >= 0
@@ -379,67 +387,72 @@ class Player(pygame.sprite.Sprite):
         self.image = self.images[self.frame/self.animecycle%len(self.images)]
         self.frame += 1
 
-        if self.invincible > 0:
-            self.invincible -= 1
-            self.image = self.image.copy()
-            if (self.frame/self.blink_interval)%2 == 0:
-                #self.image.set_alpha(128)
-                set_transparency_to_surf(self.image, 128) #FIXME
-            else:
-                #self.image.set_alpha(255)
-                set_transparency_to_surf(self.image, 255) #FIXME
-        elif self.invincible == 0:
-            self.invincible -= 1
+        if self.lives >= 0:
 
-        # Accel player
-        pressed_keys = pygame.key.get_pressed()
-        if pressed_keys[K_LEFT] or pressed_keys[K_a]:
-            self.fpvx -= self.accel
-        if pressed_keys[K_RIGHT] or pressed_keys[K_d]:
-            self.fpvx += self.accel
-        if pressed_keys[K_UP] or pressed_keys[K_w]:
-            self.fpvy -= self.accel
-        if pressed_keys[K_DOWN] or pressed_keys[K_s]:
-            self.fpvy += self.accel
+            if self.invincible > 0:
+                self.invincible -= 1
+                self.image = self.image.copy()
+                if (self.frame/self.blink_interval)%2 == 0:
+                    #self.image.set_alpha(128)
+                    set_transparency_to_surf(self.image, 128) #FIXME
+                else:
+                    #self.image.set_alpha(255)
+                    set_transparency_to_surf(self.image, 255) #FIXME
+            elif self.invincible == 0:
+                self.invincible -= 1
 
-        # Calculate friction
-        if self.fpvx > 0:
-            self.fpvx -= self.dynamic_fc
-        elif self.fpvx < 0:
-            self.fpvx += self.dynamic_fc
-        if self.fpvy > 0:
-            self.fpvy -= self.dynamic_fc
-        elif self.fpvy < 0:
-            self.fpvy += self.dynamic_fc
+            # Accel player
+            pressed_keys = pygame.key.get_pressed()
+            if pressed_keys[K_LEFT] or pressed_keys[K_a]:
+                self.fpvx -= self.accel
+            if pressed_keys[K_RIGHT] or pressed_keys[K_d]:
+                self.fpvx += self.accel
+            if pressed_keys[K_UP] or pressed_keys[K_w]:
+                self.fpvy -= self.accel
+            if pressed_keys[K_DOWN] or pressed_keys[K_s]:
+                self.fpvy += self.accel
 
-        # Restrict player speed by max_speed
-        if self.fpvx > self.max_speed:
-            self.fpvx = self.max_speed
-        elif self.fpvx < -self.max_speed:
-            self.fpvx = -self.max_speed
-        if self.fpvy > self.max_speed:
-            self.fpvy = self.max_speed
-        elif self.fpvy < -self.max_speed:
-            self.fpvy = -self.max_speed
+            # Calculate friction
+            if self.fpvx > 0:
+                self.fpvx -= self.dynamic_fc
+            elif self.fpvx < 0:
+                self.fpvx += self.dynamic_fc
+            if self.fpvy > 0:
+                self.fpvy -= self.dynamic_fc
+            elif self.fpvy < 0:
+                self.fpvy += self.dynamic_fc
 
-        # Restrict player position inside SCR_RECT
-        if SCR_RECT.right <= self.rect.right and self.fpvx > 0:
-            self.fpvx = 0
-        elif SCR_RECT.left >= self.rect.left and self.fpvx < 0:
-            self.fpvx = 0
-        if SCR_RECT.top >= self.rect.top and self.fpvy < 0:
-            self.fpvy = 0
-        elif SCR_RECT.bottom <= self.rect.bottom and self.fpvy > 0:
-            self.fpvy = 0
+            # Restrict player speed by max_speed
+            if self.fpvx > self.max_speed:
+                self.fpvx = self.max_speed
+            elif self.fpvx < -self.max_speed:
+                self.fpvx = -self.max_speed
+            if self.fpvy > self.max_speed:
+                self.fpvy = self.max_speed
+            elif self.fpvy < -self.max_speed:
+                self.fpvy = -self.max_speed
 
-        self.fpx += self.fpvx
-        self.fpy += self.fpvy
-        self.rect.x = int(self.fpx)
-        self.rect.y = int(self.fpy)
-        self.rect.clamp_ip(SCR_RECT)        
+            # Restrict player position inside SCR_RECT
+            if SCR_RECT.right <= self.rect.right and self.fpvx > 0:
+                self.fpvx = 0
+            elif SCR_RECT.left >= self.rect.left and self.fpvx < 0:
+                self.fpvx = 0
+            if SCR_RECT.top >= self.rect.top and self.fpvy < 0:
+                self.fpvy = 0
+            elif SCR_RECT.bottom <= self.rect.bottom and self.fpvy > 0:
+                self.fpvy = 0
 
-        player_pos = self.rect.center
+            self.fpx += self.fpvx
+            self.fpy += self.fpvy
+            self.rect.x = int(self.fpx)
+            self.rect.y = int(self.fpy)
+            self.rect.clamp_ip(SCR_RECT)
 
+            player_pos = self.rect.center
+
+        else:
+
+            self.player_explosion.update()
 
 
 #########################################################################################
@@ -819,6 +832,26 @@ class Explosion(pygame.sprite.Sprite):
     def kill(self):
         pygame.sprite.Sprite.kill(self)
         self.__class__.recyclebox.append(self)
+
+
+class PlayerExplosion():
+    """Player Explosion"""
+
+    step = 10 #24
+    side = 30
+
+    def __init__(self, pos):
+        self.pos = pos
+        self.frames = 0
+
+    def update(self):
+
+        if self.frames % self.step == 0:
+            v = int(random.random()*self.side)-10
+            h = int(random.random()*self.side)-10
+            e = Explosion((self.pos[0]+v, self.pos[1]+h))
+
+        self.frames += 1
 
 
 #########################################################################################

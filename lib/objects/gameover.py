@@ -61,22 +61,20 @@ class BackgroundGameover(pygame.sprite.DirtySprite):
         self.opaque = 10
         self.speed = 3
         self.opaque_lg = 255
-        self.speed_lg = -30
+        self.speed_lg = -20
 
         self.lastgame_image = lastscreen
 
 
     def update(self):
         if self.opaque < 255:
-            if self.opaque + self.speed < 255:
-                self.opaque += self.speed
-            else:
+            self.opaque += self.speed
+            if self.opaque > 255:
                 self.opaque = 255
 
         if self.opaque_lg > 0:
-            if self.opaque_lg + self.speed_lg > 0:
-                self.opaque_lg += self.speed_lg
-            else:
+            self.opaque_lg += self.speed_lg
+            if self.opaque_lg < 0:
                 self.opaque_lg = 0
 
 
