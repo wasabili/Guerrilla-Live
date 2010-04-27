@@ -4,7 +4,6 @@
 from pygame.locals import *
 
 DATA_DIR = 'data'
-GAME_TITLE = 'Guerrilla Live(!)'  # game title
 START, PLAY, GAMEOVER, SELECT, HELP, CREDIT = range(6)  # states of a game
 WIDTH = 1024
 HEIGHT = 768
