@@ -26,9 +26,10 @@ class GameoverDraw():
         PushSpaceGameover.containers        = self.gameover_all
 
         # Objects
-        self.bg_gameover = BackgroundGameover(gamedata.result == gamedata.WIN, gamedata.lastscreen)
-        self.score = ScoreGameover(gamedata.get_score())
+        self.bg_gameover = BackgroundGameover(gamedata.result==gamedata.WIN, gamedata.lastscreen)
         self.pushspace = PushSpaceGameover()
+        if gamedata.result == gamedata.WIN:
+            self.score = ScoreGameover(gamedata.get_score())
 
         self.gamedata = gamedata
 
@@ -36,7 +37,7 @@ class GameoverDraw():
         self.gameover_all.update()
 
     def draw(self, screen):
-        return self.gameover_all.draw(screen)  #FIXME bg
+        return self.gameover_all.draw(screen)
 
 
 class BackgroundGameover(pygame.sprite.DirtySprite):
@@ -78,13 +79,14 @@ class BackgroundGameover(pygame.sprite.DirtySprite):
             self.opaque += self.speed
         else:
             self.image = self.original_image
+            self.dirty = 1
 
 
 class ScoreGameover(StringSpriteBase):
 
     y = 300
-    text = 'Score: {0}'
-    color = (128, 128, 128)
+    text = 'SCORE: {0}'
+    color = (0, 0, 0)
     fontsize = 60
 
     def __init__(self, score):
@@ -112,11 +114,11 @@ class PushSpaceGameover(PushSpaceStart):
 
     y = 600
     color = (128, 128, 128)
-    wait = 75
+    wait = 60
 
     def __init__(self):
         PushSpaceStart.__init__(self)
-        self.opaque = 100
-        self.speed = 7
+        self.opaque = 0
+        self.speed = 3
 
 
