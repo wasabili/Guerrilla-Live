@@ -14,9 +14,6 @@ from lib.gamedata   import GameData
 class Guerrilla(object):
 
     def __init__(self):
-        # Initialize
-        pygame.mixer.init(22050, -16, True, 0)
-        pygame.init()
 
         # make a window
         self.fullscreen = False
@@ -245,27 +242,6 @@ class Guerrilla(object):
         # GameOver
         BackgroundGameover.loseimage    = load_image("gameover-lose.jpg")
         BackgroundGameover.winimage     = load_image("gameover-win.jpg")
-
-
-    def load_sounds(self):
-        """Load sounds"""
-
-#        # BGM FIXME
-#        pyglet.options['audio'] = ('alsa', 'openal', 'silent')
-#        self.mediaplayer = pyglet.media.Player()
-#        bgm = pyglet.media.load('data/resident_evil.wav', streaming=False)
-#        self.mediaplayer.queue(bgm)
-#        self.mediaplayer.play()
-#        self.mediaplayer.eos_action = pyglet.media.Player.EOS_LOOP
-#        pyglet.app.run()
-
-#        pygame.mixer.music.load('data/resident_evil.wav')
-#        pygame.mixer.music.play(-1)
-
-        # Register sounds into sprites
-        EColi.kill_sound = load_sound("kill.oga")
-        Player.shot_sound = load_sound("shot.oga")
-        Player.bomb_sound = load_sound("bomb.oga")
 
 
     def debug(self, screen, txt):
