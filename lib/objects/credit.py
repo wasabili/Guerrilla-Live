@@ -4,6 +4,7 @@
 import pygame
 from pygame.locals import *
 
+from lib.sprite     import *
 from lib.constants  import *
 from lib.utils      import set_transparency_to_surf
 from base           import *
@@ -17,7 +18,7 @@ class CreditDraw():
 
     def __init__(self):
         # Sprite Group
-        self.credit_all = pygame.sprite.LayeredDirty()
+        self.credit_all = LayeredDirty()
 
         # Register groups to sprites
         AuthorCredit.containers = self.credit_all

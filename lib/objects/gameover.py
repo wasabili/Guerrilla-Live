@@ -4,6 +4,7 @@
 import pygame
 from pygame.locals import *
 
+from lib.sprite     import *
 from lib.constants  import *
 from lib.utils      import set_transparency_to_surf
 from base           import *
@@ -18,7 +19,7 @@ class GameoverDraw():
 
     def __init__(self, gamedata):  # FIXME win or lose
         # Sprite Group
-        self.gameover_all = pygame.sprite.LayeredDirty()
+        self.gameover_all = LayeredDirty()
 
         # Register groups to sprites
         BackgroundGameover.containers       = self.gameover_all
@@ -40,14 +41,14 @@ class GameoverDraw():
         return self.gameover_all.draw(screen)
 
 
-class BackgroundGameover(pygame.sprite.DirtySprite):
+class BackgroundGameover(DirtySprite):
     """Background fades in when a player loses"""
 
     opaque = 255
     speed = -10
 
     def __init__(self, win, lastscreen):
-        pygame.sprite.DirtySprite.__init__(self, self.containers)
+        DirtySprite.__init__(self, self.containers)
         self.dirty = 2
 
         if win:

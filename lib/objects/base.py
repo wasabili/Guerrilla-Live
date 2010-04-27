@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
-import pygame
 from pygame.locals import *
 
+from lib.sprite import *
 from lib.constants import *
 
 class StringObjectBase():
@@ -30,7 +30,7 @@ class StringObjectBase():
         pass
 
 
-class StringSpriteBase(pygame.sprite.DirtySprite):
+class StringSpriteBase(DirtySprite):
 
     y = 0           # abstract
     x = None        # abstract
@@ -40,7 +40,7 @@ class StringSpriteBase(pygame.sprite.DirtySprite):
     color = (0,0,0) # abstract
 
     def __init__(self):
-        pygame.sprite.DirtySprite.__init__(self, self.containers)
+        DirtySprite.__init__(self, self.containers)
 
         self.font = pygame.font.SysFont(self.fontfamily, self.fontsize)
         self.image = self.font.render(self.text, True, self.color)

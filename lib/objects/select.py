@@ -5,6 +5,7 @@ import pygame
 from pygame.locals import *
 import time
 
+from lib.sprite     import *
 from lib.constants  import *
 from lib.utils      import set_transparency_to_surf
 from base           import *
@@ -19,7 +20,7 @@ class SelectDraw():
 
     def __init__(self):
         # Sprite Group
-        self.select_all = pygame.sprite.LayeredDirty()
+        self.select_all = LayeredDirty()
 
         # Register groups to sprites
         DescriptionSelect.containers        = self.select_all
@@ -65,11 +66,11 @@ class SelectDraw():
         self.ef_select = EffectSelect()
 
 
-class BackgroundSelect(pygame.sprite.DirtySprite):
+class BackgroundSelect(DirtySprite):
     """Select Background"""
 
     def __init__(self):
-        pygame.sprite.DirtySprite.__init__(self, self.containers)
+        DirtySprite.__init__(self, self.containers)
         self.rect = self.image.get_rect()
 
     def update(self):
@@ -114,7 +115,7 @@ class HelpSelect(StringSpriteBase):
         StringSpriteBase.__init__(self)
 
 
-class HighlightSelect(pygame.sprite.DirtySprite):
+class HighlightSelect(DirtySprite):
 
     entrylist = [(350, 270), (350, 350), (350, 410), (350, 470), (350, 530), (350, 590), (350, 670)]
     diffx = -60
@@ -123,7 +124,7 @@ class HighlightSelect(pygame.sprite.DirtySprite):
     wait = 0.12
 
     def __init__(self, blinker, description, sidebar):
-        pygame.sprite.DirtySprite.__init__(self, self.containers)
+        DirtySprite.__init__(self, self.containers)
 
         self.rect = self.image.get_rect()
         self.rect.x = self.entrylist[0][0] + self.diffx
@@ -175,13 +176,13 @@ class HighlightSelect(pygame.sprite.DirtySprite):
         self.oldindex = 0
         self.index = 0
 
-class BlinkerSelect(pygame.sprite.DirtySprite):
+class BlinkerSelect(DirtySprite):
 
     animecycle = 4
     pos = (10, 5)
 
     def __init__(self):
-        pygame.sprite.DirtySprite.__init__(self, self.containers)
+        DirtySprite.__init__(self, self.containers)
         self.dirty = 2
 
         # Create images
@@ -241,7 +242,7 @@ class DescriptionSelect():
 
 
 
-class DescriptionPartSelect(pygame.sprite.DirtySprite):
+class DescriptionPartSelect(DirtySprite):
 
     anime = 15
     xstart = 290
@@ -249,7 +250,7 @@ class DescriptionPartSelect(pygame.sprite.DirtySprite):
     speed = xlimit/anime
 
     def __init__(self, image, x):
-        pygame.sprite.DirtySprite.__init__(self, self.containers)
+        DirtySprite.__init__(self, self.containers)
 
         self.image = image
         self.rect = self.image.get_rect()
@@ -285,13 +286,13 @@ class DescriptionPartSelect(pygame.sprite.DirtySprite):
         self.vx = 0
 
 
-class SidebarSelect(pygame.sprite.DirtySprite):
+class SidebarSelect(DirtySprite):
  
     speed = 5
     frames = int(255/speed)
 
     def __init__(self):
-        pygame.sprite.DirtySprite.__init__(self, self.containers)
+        DirtySprite.__init__(self, self.containers)
  
         self.image = self.images[0].copy().convert_alpha()
         self.rect = self.image.get_rect()
@@ -347,13 +348,13 @@ class SidebarSelect(pygame.sprite.DirtySprite):
         self.remains = 0
         self.up = False
 
-class EffectSelect(pygame.sprite.DirtySprite):
+class EffectSelect(DirtySprite):
     """Select effects"""
 
     speed = -10
 
     def __init__(self):
-        pygame.sprite.DirtySprite.__init__(self, self.containers)
+        DirtySprite.__init__(self, self.containers)
 
         self.none_image = pygame.Surface((0,0), HWSURFACE)
         self.image = pygame.Surface(SCR_RECT.size, SRCALPHA|HWSURFACE)

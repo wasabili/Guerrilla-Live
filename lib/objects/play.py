@@ -8,6 +8,7 @@ import random
 import time
 from collections    import deque
 
+from lib.sprite     import *
 from lib.constants  import *
 from lib.utils      import *
 from base           import *
@@ -45,10 +46,10 @@ class PlayDraw():
 
     def __init__(self, gamedata):
         # Create sprite groups
-        self.play_all   = pygame.sprite.LayeredUpdates()          # Play screen
-        self.enemies    = pygame.sprite.Group()                   # Enemy Group
-        self.shots      = pygame.sprite.Group()                   # Beam Group
-        self.bosses     = pygame.sprite.Group()                   # Bosses Group
+        self.play_all   = LayeredUpdates()          # Play screen
+        self.enemies    = Group()                   # Enemy Group
+        self.shots      = Group()                   # Beam Group
+        self.bosses     = Group()                   # Bosses Group
 
         # Assign default sprite groups
         BackgroundPlay.containers   = self.play_all
@@ -255,7 +256,7 @@ class PlayDraw():
         """Detect collision"""
 
         """ Between enemies and shots """
-        enemy_collided = pygame.sprite.groupcollide(self.enemies, self.shots, False, True)
+        enemy_collided = groupcollide(self.enemies, self.shots, False, True)
         for enemy, shots in enemy_collided.items():
             if not enemy.hit(1):  #FIXME
                 enemy.kill()                    # Kill an enemy
@@ -263,7 +264,7 @@ class PlayDraw():
                 recycle_or_gen_object(Explosion, shots[0].rect.center) # Draw explosion
 
         """ Between player and E.Colis """
-        player_collided = pygame.sprite.spritecollide(self.player, self.enemies, True)
+        player_collided = spritecollide(self.player, self.enemies, True)
         if player_collided:
             if not self.player.killed_once(): # die once
                 self.gamedata.result = self.gamedata.LOSE
@@ -297,13 +298,13 @@ class PlayDraw():
         return self.gameover and self.gameend_timer < 0
 
 
-class BackgroundPlay(pygame.sprite.Sprite):
+class BackgroundPlay(Sprite):
     """Background follows player's move"""
 
     mag = 0.2
 
     def __init__(self, level):
-        pygame.sprite.Sprite.__init__(self, self.containers)
+        Sprite.__init__(self, self.containers)
 
         magged_size = (int(SCR_RECT.width*(1+self.mag)), int(SCR_RECT.height*(1+self.mag)))
 
@@ -327,7 +328,7 @@ class BackgroundPlay(pygame.sprite.Sprite):
 #########################################################################################
 
 
-class Player(pygame.sprite.Sprite):
+class Player(Sprite):
     """Own ship"""
 
     speed = 2
@@ -345,7 +346,7 @@ class Player(pygame.sprite.Sprite):
     blink_interval = 10
 
     def __init__(self):
-        pygame.sprite.Sprite.__init__(self, self.containers)
+        Sprite.__init__(self, self.containers)
         
         self.image = self.images[0]
         self.rect = self.image.get_rect()
@@ -460,13 +461,13 @@ class Player(pygame.sprite.Sprite):
 #########################################################################################
 
 
-class Shot(pygame.sprite.Sprite):
+class Shot(Sprite):
     """プレイヤーが発射するビーム"""
 
     speed = 9  # 移動速度
 
     def __init__(self, start, target=None, degree=None):
-        pygame.sprite.Sprite.__init__(self, self.containers)
+        Sprite.__init__(self, self.containers)
 
         # Rotate image
         if degree is None:
@@ -516,7 +517,7 @@ class Shot(pygame.sprite.Sprite):
             self.kill()
 
     def kill(self):
-        pygame.sprite.Sprite.kill(self)
+        Sprite.kill(self)
         self.__class__.recyclebox.append(self)
 
 
@@ -546,12 +547,12 @@ class SextupleShot():
         recycle_or_gen_object(Shot, start, None, degree+300 if degree+300<180 else degree-60)
         del self
 
-class Bomb(pygame.sprite.Sprite):
+class Bomb(Sprite):
 
     speed = 30
 
     def __init__(self):
-        pygame.sprite.Sprite.__init__(self, self.containers)
+        Sprite.__init__(self, self.containers)
 
         self.base_img = pygame.Surface(SCR_RECT.size, SRCALPHA|HWSURFACE)
         self.image = self.base_img.copy()
@@ -576,14 +577,14 @@ class Bomb(pygame.sprite.Sprite):
 #########################################################################################
 
 
-class EColi(pygame.sprite.Sprite):
+class EColi(Sprite):
     """E.Coli"""
 
     speed = 1.2  # 移動速度
     animecycle = 18  # アニメーション速度
 
     def __init__(self, pos):
-        pygame.sprite.Sprite.__init__(self, self.containers)
+        Sprite.__init__(self, self.containers)
 
         self.image = self.images[0]
         self.rect = self.image.get_rect()
@@ -635,11 +636,11 @@ class EColi(pygame.sprite.Sprite):
         return self.hp > 0
 
     def kill(self):
-        pygame.sprite.Sprite.kill(self)
+        Sprite.kill(self)
         self.__class__.recyclebox.append(self)
 
 
-class EColi2(pygame.sprite.Sprite):
+class EColi2(Sprite):
     """E.Coli2"""
 
     start_hp = 3
@@ -648,7 +649,7 @@ class EColi2(pygame.sprite.Sprite):
     animecycle = 10
 
     def __init__(self, pos):
-        pygame.sprite.Sprite.__init__(self, self.containers)
+        Sprite.__init__(self, self.containers)
 
         self.image = self.images[0]
         self.rect = self.image.get_rect()
@@ -711,11 +712,11 @@ class EColi2(pygame.sprite.Sprite):
         return self.hp > 0
 
     def kill(self):
-        pygame.sprite.Sprite.kill(self)
+        Sprite.kill(self)
         self.__class__.recyclebox.append(self)
 
 
-class BigEColi(pygame.sprite.Sprite):
+class BigEColi(Sprite):
     """Sample Boss: no attaching and no animation"""
 
     speed = 2  # 移動速度
@@ -729,7 +730,7 @@ class BigEColi(pygame.sprite.Sprite):
     av = 0  # Angular velocity
 
     def __init__(self):
-        pygame.sprite.Sprite.__init__(self, self.containers)
+        Sprite.__init__(self, self.containers)
 
         self.image = self.images[0]
         self.rect = self.image.get_rect()
@@ -800,14 +801,14 @@ class BigEColi(pygame.sprite.Sprite):
 #########################################################################################
 
 
-class Explosion(pygame.sprite.Sprite):
+class Explosion(Sprite):
     """Explosion effect"""
 
     animecycle = 2  # アニメーション速度
     max_frame = 16 * animecycle  # a frame to disappear
 
     def __init__(self, pos):
-        pygame.sprite.Sprite.__init__(self, self.containers)
+        Sprite.__init__(self, self.containers)
 
         self.image = self.images[0]
 
@@ -830,7 +831,7 @@ class Explosion(pygame.sprite.Sprite):
             self.kill()  # disappear
 
     def kill(self):
-        pygame.sprite.Sprite.kill(self)
+        Sprite.kill(self)
         self.__class__.recyclebox.append(self)
 
 
@@ -859,14 +860,14 @@ class PlayerExplosion():
 #########################################################################################
 
 
-class HeartMark(pygame.sprite.Sprite):
+class HeartMark(Sprite):
     """Life remains"""
 
     animecycle = 1
     destroy_limit = 60
 
     def __init__(self, pos):
-        pygame.sprite.Sprite.__init__(self, self.containers)
+        Sprite.__init__(self, self.containers)
         self.dirty = 2
 
         self.image = self.images[0]
@@ -900,13 +901,13 @@ class HeartMark(pygame.sprite.Sprite):
         self.destroyed = True
 
 
-class Gage(pygame.sprite.Sprite):
+class Gage(Sprite):
     """Score Gage"""
 
     pos = (28, 738)
 
     def __init__(self, gamedata):
-        pygame.sprite.Sprite.__init__(self, self.containers)
+        Sprite.__init__(self, self.containers)
 
         self.image = self.image_red
         self.rect = self.image.get_rect()
@@ -938,14 +939,14 @@ class Gage(pygame.sprite.Sprite):
             self.dirty = 1
 
 
-class GageMask(pygame.sprite.Sprite):
+class GageMask(Sprite):
 
     max_width = 964
     max_height = 5
     border_length = 2
 
     def __init__(self, gamedata, pos):
-        pygame.sprite.Sprite.__init__(self, self.containers)
+        Sprite.__init__(self, self.containers)
 
         self.image = pygame.Surface((self.max_width, self.max_height))
         self.image.fill((0,0,0))
@@ -968,10 +969,10 @@ class GageMask(pygame.sprite.Sprite):
         self.rect.topright = self.topright
 
 
-class GageSeparator(pygame.sprite.Sprite):
+class GageSeparator(Sprite):
 
     def __init__(self, pos):
-        pygame.sprite.Sprite.__init__(self, self.containers)
+        Sprite.__init__(self, self.containers)
 
         self.rect = self.image.get_rect()
         self.rect.topleft = pos
@@ -1021,12 +1022,12 @@ class WeaponPanel():
         return self.selection
 
 
-class WeaponPanelPart(pygame.sprite.DirtySprite):
+class WeaponPanelPart(DirtySprite):
 
     speed = 5
 
     def __init__(self, image, y):
-        pygame.sprite.DirtySprite.__init__(self, self.containers)
+        DirtySprite.__init__(self, self.containers)
 
         self.image = image
         self.rect = self.image.get_rect()
@@ -1069,13 +1070,13 @@ class WeaponPanelPart(pygame.sprite.DirtySprite):
                 self.x = n
 
 
-class WeaponSelector(pygame.sprite.DirtySprite):
+class WeaponSelector(DirtySprite):
 
     animecycle = 4
     x = 160
 
     def __init__(self):
-        pygame.sprite.DirtySprite.__init__(self, self.containers)
+        DirtySprite.__init__(self, self.containers)
         self.dirty = 2
 
         # Create images
@@ -1106,12 +1107,12 @@ class WeaponSelector(pygame.sprite.DirtySprite):
         self.image = self.arrow_none
         self.visible = False
 
-class DisplayWeapon(pygame.sprite.Sprite):
+class DisplayWeapon(Sprite):
 
     pos = (20, 738-70)
 
     def __init__(self, gamedata):
-        pygame.sprite.Sprite.__init__(self, self.containers)
+        Sprite.__init__(self, self.containers)
         self.dirty = 2
 
         self.image = self.images[0]

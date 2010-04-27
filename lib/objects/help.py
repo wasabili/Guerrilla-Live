@@ -5,6 +5,7 @@ import pygame
 from pygame.locals import *
 import sys
 
+from lib.sprite     import *
 from lib.constants  import *
 from lib.utils      import set_transparency_to_surf
 from base           import *
@@ -19,7 +20,7 @@ class HelpDraw():
 
     def __init__(self):
         # Sprite Group
-        self.help_all = pygame.sprite.LayeredDirty()
+        self.help_all = LayeredDirty()
 
         # Register groups to sprites
         BackgroundHelp.containers   = self.help_all
@@ -59,10 +60,10 @@ class HelpDraw():
         return self.closed
 
 
-class BackgroundHelp(pygame.sprite.DirtySprite):
+class BackgroundHelp(DirtySprite):
 
     def __init__(self):
-        pygame.sprite.DirtySprite.__init__(self, self.containers)
+        DirtySprite.__init__(self, self.containers)
         self.dirty = 2
 
         self.index = 0
@@ -97,13 +98,13 @@ class BackgroundHelp(pygame.sprite.DirtySprite):
         self.cycle = 1
         
 
-class CoverHelp(pygame.sprite.DirtySprite):
+class CoverHelp(DirtySprite):
 
     ENTER, SHOW, EXIT = range(3)
     FIRST, SECOND, WAIT = range(3)
 
     def __init__(self):
-        pygame.sprite.DirtySprite.__init__(self, self.containers)
+        DirtySprite.__init__(self, self.containers)
         self.dirty = 2
 
         self.rect = None
@@ -169,12 +170,12 @@ class CoverHelp(pygame.sprite.DirtySprite):
         return self.state == self.EXIT and self.opaque == 0
 
 
-class ContentsHelp(pygame.sprite.DirtySprite):
+class ContentsHelp(DirtySprite):
     
     pos = (74, 74)
 
     def __init__(self, cover_help):
-        pygame.sprite.DirtySprite.__init__(self, self.containers)
+        DirtySprite.__init__(self, self.containers)
         self.dirty = 2
 
         self.none_image = pygame.Surface((0,0))
