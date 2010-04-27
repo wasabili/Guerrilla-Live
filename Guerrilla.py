@@ -14,6 +14,8 @@ from lib.gamedata   import GameData
 class Guerrilla(object):
 
     def __init__(self):
+        # Initialize
+        pygame.init()
 
         # make a window
         self.fullscreen = False
@@ -22,7 +24,6 @@ class Guerrilla(object):
 
         # load contents
         self.load_images()
-        self.load_sounds()
 
         # Initialize Game object
         self.init_game()
@@ -242,7 +243,6 @@ class Guerrilla(object):
         # GameOver
         BackgroundGameover.loseimage    = load_image("gameover-lose.jpg")
         BackgroundGameover.winimage     = load_image("gameover-win.jpg")
-
 
     def debug(self, screen, txt):
         screen.blit(self.font.render('debug: '+txt, False, (255,255,255)), (20,30))
