@@ -19,7 +19,7 @@ class GameoverDraw():
 
     def __init__(self, gamedata):  # FIXME win or lose
         # Sprite Group
-        self.gameover_all = LayeredDirty()
+        self.gameover_all = BaseGroup()
 
         # Register groups to sprites
         BackgroundGameover.containers       = self.gameover_all

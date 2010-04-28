@@ -3,6 +3,7 @@
 
 import pygame
 from pygame.locals import *
+from gloss          import *
 import math
 import random
 import time
@@ -46,7 +47,7 @@ class PlayDraw():
 
     def __init__(self, gamedata):
         # Create sprite groups
-        self.play_all   = LayeredUpdates()          # Play screen
+        self.play_all   = BaseGroup()               # Play screen
         self.enemies    = Group()                   # Enemy Group
         self.shots      = Group()                   # Beam Group
         self.bosses     = Group()                   # Bosses Group
@@ -103,15 +104,15 @@ class PlayDraw():
 
 
         # Manage game system
-        if not self.gameover:
-            self.manage_weapon_system()
-            self.manage_enemies()
-        else:
-            self.gameend_timer -= 1
+#        if not self.gameover:
+#            self.manage_weapon_system()
+#            self.manage_enemies()
+#        else:
+#            self.gameend_timer -= 1
 
 
-    def draw(self, screen):
-        return self.play_all.draw(screen)
+    def draw(self):
+        self.play_all.draw()
 
     def manage_weapon_system(self):
         """ Manage Weapon System"""
@@ -298,29 +299,24 @@ class PlayDraw():
         return self.gameover and self.gameend_timer < 0
 
 
-class BackgroundPlay(Sprite):
+class BackgroundPlay(BaseSprite):
     """Background follows player's move"""
 
-    mag = 0.2
-
     def __init__(self, level):
-        Sprite.__init__(self, self.containers)
+        self.texture = self.texs[level-1]
+        BaseSprite.__init__(self)
 
-        magged_size = (int(SCR_RECT.width*(1+self.mag)), int(SCR_RECT.height*(1+self.mag)))
+        self.scale = 1.2
 
-        self.image = self.images[level-1]  # FIXME
-        self.image = pygame.transform.scale(self.image, (magged_size[0], magged_size[1]))
-        self.rect = self.image.get_rect()
-
-        self.startx = -magged_size[0]*(self.mag/(1+self.mag))/2.0
-        self.starty = -magged_size[1]*(self.mag/(1+self.mag))/2.0
+        self.startx = -SCR_RECT.width * (self.scale - 1)/2.0
+        self.starty = -SCR_RECT.height * (self.scale - 1)/2.0
 
     def update(self):
         pos = player_pos
         start = SCR_RECT.center
 
-        self.rect.x = self.startx + (start[0] - pos[0])*self.mag
-        self.rect.y = self.starty + (start[1] - pos[1])*self.mag
+        self.rect.x = self.startx + (start[0] - pos[0])*(self.scale - 1)
+        self.rect.y = self.starty + (start[1] - pos[1])*(self.scale - 1)
 
 
 #########################################################################################
@@ -328,28 +324,26 @@ class BackgroundPlay(Sprite):
 #########################################################################################
 
 
-class Player(Sprite):
+class Player(BaseSprite):
     """Own ship"""
 
     speed = 2
     accel = 0.15
     dynamic_fc = 0.05
     max_speed = 4
-    # When the object is static, its friction coefficient is 0
 
     frame = 0L
     animecycle = 2
 
-    lives = 0 #FIXME FIXME
+    lives = 3 #FIXME FIXME
     hearts = []
     invincible = -1
     blink_interval = 10
 
     def __init__(self):
-        Sprite.__init__(self, self.containers)
+        self.texture = self.textures[0]
+        BaseSprite.__init__(self, self.containers)
         
-        self.image = self.images[0]
-        self.rect = self.image.get_rect()
         self.rect = Rect(0, 0, self.rect.width*3/4, self.rect.height*3/4)  #FIXME TEST
         self.rect.center = CENTER
 
@@ -385,20 +379,17 @@ class Player(Sprite):
         global player_pos
 
         # Character Animation
-        self.image = self.images[self.frame/self.animecycle%len(self.images)]
+        self.texture = self.textures[self.frame/self.animecycle%len(self.textures)]
         self.frame += 1
 
         if self.lives >= 0:
 
             if self.invincible > 0:
                 self.invincible -= 1
-                self.image = self.image.copy()
                 if (self.frame/self.blink_interval)%2 == 0:
-                    #self.image.set_alpha(128)
-                    set_transparency_to_surf(self.image, 128) #FIXME
+                    self.opaque = 0.5
                 else:
-                    #self.image.set_alpha(255)
-                    set_transparency_to_surf(self.image, 255) #FIXME
+                    self.opaque = 1.0
             elif self.invincible == 0:
                 self.invincible -= 1
 
@@ -461,24 +452,20 @@ class Player(Sprite):
 #########################################################################################
 
 
-class Shot(Sprite):
+class Shot(BaseSprite):
     """プレイヤーが発射するビーム"""
 
     speed = 9  # 移動速度
 
     def __init__(self, start, target=None, degree=None):
-        Sprite.__init__(self, self.containers)
+        BaseSprite.__init__(self, self.containers)
 
-        # Rotate image
-        if degree is None:
-            direction = math.atan2(target[1]-start[1], target[0]-start[0])
-            self.image = pygame.transform.rotate(self.shot_image, -180*direction/math.pi)
-        else:
-            direction = -degree*math.pi/180.0
-            self.image = pygame.transform.rotate(self.shot_image, degree)
-
-        self.rect = self.image.get_rect()
         self.rect.center = start
+        if degree is None:
+            self.rotation = -180*(math.atan2(target[1]-start[1], target[0]-start[0]))/math.pi
+        else:
+            self.rotation = -degree
+
         self.fpx = float(self.rect.x)
         self.fpy = float(self.rect.y)
 
@@ -486,16 +473,12 @@ class Shot(Sprite):
         self.fpvy = math.sin(direction) * self.speed
 
     def init(self, start, target=None, degree=None):
-        # Rotate image
-        if degree is None:
-            direction = math.atan2(target[1]-start[1], target[0]-start[0])
-            self.image = pygame.transform.rotate(self.shot_image, -180*direction/math.pi)
-        else:
-            direction = -degree*math.pi/180.0
-            self.image = pygame.transform.rotate(self.shot_image, degree)
-
-        self.rect = self.image.get_rect()
         self.rect.center = start
+        if degree is None:
+            self.rotation = -180*(math.atan2(target[1]-start[1], target[0]-start[0]))/math.pi
+        else:
+            self.rotation = -degree
+
         self.fpx = float(self.rect.x)
         self.fpy = float(self.rect.y)
 
@@ -517,7 +500,7 @@ class Shot(Sprite):
             self.kill()
 
     def kill(self):
-        Sprite.kill(self)
+        BaseSprite.kill(self)
         self.__class__.recyclebox.append(self)
 
 
@@ -547,16 +530,19 @@ class SextupleShot():
         recycle_or_gen_object(Shot, start, None, degree+300 if degree+300<180 else degree-60)
         del self
 
-class Bomb(Sprite):
+class Bomb(BaseSprite): # FIXME FIXME
 
     speed = 30
 
     def __init__(self):
-        Sprite.__init__(self, self.containers)
+        self.base_img = pygame.Surface(SCR_RECT.size, SRCALPHA|HWSURFACE)
+        self.image = self.base_img.copy()
+        self.texture = Texture(self.image)
+        BaseSprite.__init__(self, self.containers)
 
         self.base_img = pygame.Surface(SCR_RECT.size, SRCALPHA|HWSURFACE)
         self.image = self.base_img.copy()
-        self.rect = SCR_RECT    
+        self.rect = SCR_RECT
 
         self.start = player_pos
         self.radius = 5
@@ -565,6 +551,7 @@ class Bomb(Sprite):
     def update(self):
         self.image = self.base_img.copy()
         pygame.draw.circle(self.image, (255,255,255), self.start, self.radius, self.width)
+        self.texture = Texture(self.image)
 
         self.radius += self.speed
 
@@ -577,17 +564,16 @@ class Bomb(Sprite):
 #########################################################################################
 
 
-class EColi(Sprite):
+class EColi(BaseSprite):
     """E.Coli"""
 
     speed = 1.2  # 移動速度
     animecycle = 18  # アニメーション速度
 
     def __init__(self, pos):
-        Sprite.__init__(self, self.containers)
+        self.texture = self.textures[0]
+        BaseSprite.__init__(self, self.containers)
 
-        self.image = self.images[0]
-        self.rect = self.image.get_rect()
         self.rect.center = pos
 
         # 速度を計算
@@ -611,15 +597,13 @@ class EColi(Sprite):
 
         # Character Animation FIXME
         self.frame += 1
-        self.image = self.images[self.frame/self.animecycle%len(self.images)]
+        self.texture = self.textures[self.frame/self.animecycle%len(self.textures)]
 
         # 終点の角度を計算
         target = player_pos
         start = self.rect.center
         direction = math.atan2(target[1]-start[1], target[0]-start[0])
-
-        # rotate
-        self.image = pygame.transform.rotate(self.image, -180*direction/math.pi)
+        self.rotation = -180*direction/math.pi
 
         # Move
         fpvx = math.cos(direction) * self.speed
@@ -636,11 +620,11 @@ class EColi(Sprite):
         return self.hp > 0
 
     def kill(self):
-        Sprite.kill(self)
+        BaseSprite.kill(self)
         self.__class__.recyclebox.append(self)
 
 
-class EColi2(Sprite):
+class EColi2(BaseSprite):
     """E.Coli2"""
 
     start_hp = 3
@@ -649,10 +633,9 @@ class EColi2(Sprite):
     animecycle = 10
 
     def __init__(self, pos):
-        Sprite.__init__(self, self.containers)
+        self.texture = self.textures[0]
+        BaseSprite.__init__(self, self.containers)
 
-        self.image = self.images[0]
-        self.rect = self.image.get_rect()
         self.rect.center = pos
 
         # 速度を計算
@@ -681,12 +664,12 @@ class EColi2(Sprite):
         if self.blink_timer > 0:
             self.frame += 1
             self.blink_timer -= 1
-            self.image = self.images[(self.frame/self.animecycle)%2]
+            self.texture = self.textures[(self.frame/self.animecycle)%2]
         elif self.blink_timer == 0:
-            self.image = self.images[0]
+            self.texture = self.textures[0]
             self.blink_timer -= 1
         else:
-            self.image = self.images[0]
+            self.texture = self.textures[0]
 
         # 終点の角度を計算
         target = player_pos
@@ -694,7 +677,7 @@ class EColi2(Sprite):
         direction = math.atan2(target[1]-start[1], target[0]-start[0])
 
         # rotate
-        self.image = pygame.transform.rotate(self.image.copy(), -180*direction/math.pi)
+        self.rotation = -180*direction/math.pi
 
         # Move
         fpvx = math.cos(direction) * self.speed
@@ -712,11 +695,11 @@ class EColi2(Sprite):
         return self.hp > 0
 
     def kill(self):
-        Sprite.kill(self)
+        BaseSprite.kill(self)
         self.__class__.recyclebox.append(self)
 
 
-class BigEColi(Sprite):
+class BigEColi(BaseSprite):
     """Sample Boss: no attaching and no animation"""
 
     speed = 2  # 移動速度
@@ -730,10 +713,9 @@ class BigEColi(Sprite):
     av = 0  # Angular velocity
 
     def __init__(self):
-        Sprite.__init__(self, self.containers)
+        self.texture = self.textures[0]
+        BaseSprite.__init__(self, self.containers)
 
-        self.image = self.images[0]
-        self.rect = self.image.get_rect()
         self.rect = Rect(self.rect.width*1/8, self.rect.height*1/8, self.rect.width*3/4, self.rect.height*3/4)  #TODO test
         self.rect.center = (-self.rect.width/2, -self.rect.height/2)
 
@@ -762,12 +744,12 @@ class BigEColi(Sprite):
         if self.blink_timer > 0:
             self.frame += 1
             self.blink_timer -= 1
-            self.image = self.images[(self.frame/self.animecycle)%2]
+            self.texture = self.textures[(self.frame/self.animecycle)%2]
         elif self.blink_timer == 0:
-            self.image = self.images[0]
+            self.texture = self.textures[0]
             self.blink_timer -= 1
         else:
-            self.image = self.images[0]
+            self.texture = self.textures[0]
 
 
         if self.animechap == 0:
@@ -801,37 +783,35 @@ class BigEColi(Sprite):
 #########################################################################################
 
 
-class Explosion(Sprite):
+class Explosion(BaseSprite):
     """Explosion effect"""
 
     animecycle = 2  # アニメーション速度
     max_frame = 16 * animecycle  # a frame to disappear
 
     def __init__(self, pos):
-        Sprite.__init__(self, self.containers)
+        self.texture = self.textures[0]
+        BaseSprite.__init__(self, self.containers)
 
-        self.image = self.images[0]
-
-        self.rect = self.image.get_rect()
         self.rect.center = pos
 
         self.frame = 0
 
     def init(self, pos):
-        self.image = self.images[0]
+        self.texture = self.textures[0]
         self.rect.center = pos
         self.frame = 0
         self.add(self.containers)
 
     def update(self):
         # Character Animation
-        self.image = self.images[self.frame/self.animecycle]
+        self.texture = self.textures[self.frame/self.animecycle]
         self.frame += 1
         if self.frame == self.max_frame:
             self.kill()  # disappear
 
     def kill(self):
-        Sprite.kill(self)
+        BaseSprite.kill(self)
         self.__class__.recyclebox.append(self)
 
 
@@ -860,30 +840,27 @@ class PlayerExplosion():
 #########################################################################################
 
 
-class HeartMark(Sprite):
+class HeartMark(BaseSprite):
     """Life remains"""
 
     animecycle = 1
     destroy_limit = 60
 
     def __init__(self, pos):
-        Sprite.__init__(self, self.containers)
-        self.dirty = 2
+        self.texture = self.textures[0]
+        BaseSprite.__init__(self, self.containers)
 
-        self.image = self.images[0]
-
-        self.rect = self.image.get_rect()
         self.rect.center = pos
 
         self.frame = 0
-        self.max_frame = len(self.images) * self.animecycle  # a frame to rewind
+        self.max_frame = len(self.textures) * self.animecycle  # a frame to rewind
 
         self.destroyed = False
         self.destroy_frame = 0
 
     def update(self):
         # Character Animation
-        self.image = self.images[self.frame/self.animecycle]
+        self.texture = self.textures[self.frame/self.animecycle]
         self.frame += 1
         if self.frame == self.max_frame:
             self.frame = 0
@@ -892,8 +869,7 @@ class HeartMark(Sprite):
             if self.destroy_frame >= self.destroy_limit:
                 self.kill()
 
-            self.image = self.image.copy()
-            set_transparency_to_surf(self.image, 255*(1- self.destroy_frame/float(self.destroy_limit)))
+            self.opaque = 1- self.destroy_frame/float(self.destroy_limit)
 
             self.destroy_frame += 1
 
@@ -901,16 +877,15 @@ class HeartMark(Sprite):
         self.destroyed = True
 
 
-class Gage(Sprite):
+class Gage(BaseSprite):
     """Score Gage"""
 
     pos = (28, 738)
 
     def __init__(self, gamedata):
-        Sprite.__init__(self, self.containers)
+        self.texture = self.texture_red
+        BaseSprite.__init__(self, self.containers)
 
-        self.image = self.image_red
-        self.rect = self.image.get_rect()
         self.rect.topleft = self.pos
 
         # Mask
@@ -930,51 +905,49 @@ class Gage(Sprite):
             return
 
         elif self.gamedata.weapon_mode == self.gamedata.SHOT:
-            self.image = self.image_red
+            self.texture = self.texture_red
             self.lastweapon = self.gamedata.weapon_mode
             self.dirty = 1
         else:
-            self.image = self.image_blue
+            self.texture = self.texture_blue
             self.lastweapon = self.gamedata.weapon_mode
             self.dirty = 1
 
 
-class GageMask(Sprite):
+class GageMask(BaseSprite):
 
     max_width = 964
     max_height = 5
     border_length = 2
 
     def __init__(self, gamedata, pos):
-        Sprite.__init__(self, self.containers)
+        image = pygame.Surface((self.max_width, self.max_height))
+        image.fill((0,0,0))
+        self.texture = Texture(image)
+        BaseSprite.__init__(self, self.containers)
 
-        self.image = pygame.Surface((self.max_width, self.max_height))
-        self.image.fill((0,0,0))
-        self.none_image = pygame.Surface((0,0))
-        self.rect = self.image.get_rect()
         self.topright = (pos[0]+self.border_length+self.max_width, pos[1]+self.border_length)
         self.rect.topright = self.topright
 
-        self.percent = 0
         self.gamedata = gamedata
 
     def update(self):
         self.dirty = 1
 
-        self.percent = float(self.gamedata.subweapon_counter)/self.gamedata.gage_limit
+        percent = float(self.gamedata.subweapon_counter)/self.gamedata.gage_limit
 
-        self.image = pygame.Surface((self.max_width*(1-self.percent), self.max_height))
-        self.image.fill((0,0,0))
-        self.rect = self.image.get_rect()
+        image = pygame.Surface((self.max_width*(1-percent), self.max_height))
+        image.fill((0,0,0))
+        self.rect = image.get_rect()
+        self.texture = Texture(image)
         self.rect.topright = self.topright
 
 
-class GageSeparator(Sprite):
+class GageSeparator(BaseSprite):
 
     def __init__(self, pos):
-        Sprite.__init__(self, self.containers)
+        BaseSprite.__init__(self, self.containers)
 
-        self.rect = self.image.get_rect()
         self.rect.topleft = pos
 
 
@@ -987,9 +960,9 @@ class WeaponPanel():
         WeaponPanelPart._layer      = self._layer
 
         self.parts = []
-        self.parts.append(WeaponPanelPart(self.images[0], self.pos[0]))
-        self.parts.append(WeaponPanelPart(self.images[1], self.pos[1]))
-        self.parts.append(WeaponPanelPart(self.images[2], self.pos[2]))
+        self.parts.append(WeaponPanelPart(self.textures[0], self.pos[0]))
+        self.parts.append(WeaponPanelPart(self.textures[1], self.pos[1]))
+        self.parts.append(WeaponPanelPart(self.textures[2], self.pos[2]))
 
         WeaponSelector.containers   = self.containers
         WeaponSelector._layer       = self._layer
@@ -1022,18 +995,17 @@ class WeaponPanel():
         return self.selection
 
 
-class WeaponPanelPart(DirtySprite):
+class WeaponPanelPart(BaseSprite):
 
     speed = 5
 
-    def __init__(self, image, y):
-        DirtySprite.__init__(self, self.containers)
+    def __init__(self, texture, y):
+        self.texture = texture
+        BaseSprite.__init__(self, self.containers)
 
-        self.image = image
-        self.rect = self.image.get_rect()
         self.rect.topright = (0, y)
 
-        self.max_x = self.image.get_width()
+        self.max_x = self.texture.width
         self.min_x = 0
 
         self.x = self.min_x
@@ -1052,12 +1024,10 @@ class WeaponPanelPart(DirtySprite):
             self.vx = -self.speed
 
     def update(self):
-        self.dirty = 1
 
         self.rect.right = self.x
 
         if self.vx != 0:
-            self.dirty = 1
 
             n = self.x + self.vx
             if n < self.min_x:
@@ -1070,21 +1040,19 @@ class WeaponPanelPart(DirtySprite):
                 self.x = n
 
 
-class WeaponSelector(DirtySprite):
+class WeaponSelector(BaseSprite):
 
     animecycle = 4
     x = 160
 
     def __init__(self):
-        DirtySprite.__init__(self, self.containers)
-        self.dirty = 2
+        BaseSprite.__init__(self, self.containers)
 
         # Create images
-        self.arrow_dark = self.image.copy()
-        self.arrow_none = pygame.Surface((0,0), HWSURFACE)
+        self.arrow_dark = self.texture
+        self.arrow_none = Texture(pygame.Surface((0,0), HWSURFACE))
 
-        self.rect = self.image.get_rect()
-        self.image = self.arrow_none
+        self.texture = self.arrow_none
         self.frame = 0
         self.visible = False
 
@@ -1092,9 +1060,9 @@ class WeaponSelector(DirtySprite):
 
         if self.visible:
             if self.frame/self.animecycle%2 == 0:
-                self.image = self.arrow_dark
+                self.texture = self.arrow_dark
             else:
-                self.image = self.arrow_none
+                self.texture = self.arrow_none
             self.frame += 1
 
     def change(self, y):
@@ -1104,30 +1072,28 @@ class WeaponSelector(DirtySprite):
         self.visible = True
 
     def hide(self):
-        self.image = self.arrow_none
+        self.texture = self.arrow_none
         self.visible = False
 
-class DisplayWeapon(Sprite):
+class DisplayWeapon(BaseSprite):
 
     pos = (20, 738-70)
 
     def __init__(self, gamedata):
-        Sprite.__init__(self, self.containers)
-        self.dirty = 2
+        self.texture = self.textures[0]
+        BaseSprite.__init__(self, self.containers)
 
-        self.image = self.images[0]
-        self.rect = self.image.get_rect()
         self.rect.topleft = self.pos
 
         self.gamedata = gamedata
 
     def update(self):
         if self.gamedata.weapon_mode == self.gamedata.SHOT:
-            self.image = self.images[0]
+            self.texture = self.textures[0]
         elif self.gamedata.weapon_mode == self.gamedata.SUBSHOT:
-            self.image = self.images[1]
+            self.texture = self.textures[1]
         elif self.gamedata.weapon_mode == self.gamedata.MACHINEGUN:
-            self.image = self.images[2]
+            self.texture = self.textures[2]
         elif self.gamedata.weapon_mode == self.gamedata.BOMB:
-            self.image = self.images[3]
+            self.texture = self.textures[3]
 

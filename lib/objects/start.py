@@ -4,7 +4,6 @@
 import pygame
 from pygame.locals import *
 
-from lib.sprite     import *
 from lib.constants  import *
 from lib.utils      import set_transparency_to_surf
 from base           import *
@@ -18,7 +17,7 @@ class StartDraw():
 
     def __init__(self):
         # Sprite Group
-        self.start_all = LayeredDirty()
+        self.start_all = BaseGroup()
 
         # Register groups to sprites
         PushSpaceStart.containers   = self.start_all
@@ -31,8 +30,8 @@ class StartDraw():
     def update(self):
         self.start_all.update()
 
-    def draw(self, screen):
-        return self.start_all.draw(screen, BackgroundStart.image)
+    def draw(self):
+        self.start_all.draw()
 
 
 class BackgroundStart(DirtySprite):

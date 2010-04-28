@@ -5,61 +5,79 @@ import sys
 
 import pygame
 from pygame.locals  import *
-from gloss.gloss    import *
 
 from lib.constants  import *
-from lib.utils      import load_image, load_sound
 from lib.objects    import *
 from lib.gamedata   import GameData
 
+from gloss.gloss       import *
 
 class Guerrilla(GlossGame):
 
     def load_content(self):
 
+        print 'ad'
+
+        def load_image(filename, split=None):
+            if split is None:
+                yield Texture(os.path.join("data", filename))
+            else:
+                image_list = []
+                image = pygame.image.load(os.path.join("data", filename))
+                w = image.get_width()
+                h = image.get_height()
+                for i in range(0, w, w/n):
+                    surface = pygame.Surface((w1,h), image.get_flags())
+                    surface.blit(image, (0,0), (i,0,w1,h))
+                    yield Texture(surface)
+
         """Load images"""
         # Register images into sprites
-        Player.images                   = load_image("player.png", 480)
-        Shot.shot_image                 = load_image("shot.png")
-        EColi.images                    = load_image("ecoli.png", 3)
-        EColi2.images                   = load_image("ecoli2.png", 2)
-        BigEColi.images                 = load_image("big-ecoli.png", 2)  #FIXME FIXME
-        Explosion.images                = load_image("explosion.png", 16)
-        HeartMark.images                = load_image("heart-animation.png", 96)
-        WeaponPanel.images              = [load_image("weaponpanel"+str(x)+".png") for x in range(1, 4)]
-        WeaponSelector.image            = load_image("weapon-selector-arrow.png")
-        DisplayWeapon.images            = [load_image("current-weapon"+str(x)+".png") for x in range(1, 5)]
+        Player.textures                   = load_image("player.png", 480)
+        Shot.texture                 = load_image("shot.png")
+        EColi.textures                    = load_image("ecoli.png", 3)
+        EColi2.textures                   = load_image("ecoli2.png", 2)
+        BigEColi.textures                 = load_image("big-ecoli.png", 2)  #FIXME FIXME
+        Explosion.textures                = load_image("explosion.png", 16)
+        HeartMark.textures                = load_image("heart-animation.png", 96)
+        WeaponPanel.textures              = [load_image("weaponpanel"+str(x)+".png") for x in range(1, 4)]
+        WeaponSelector.texture            = load_image("weapon-selector-arrow.png")
+        DisplayWeapon.textures            = [load_image("current-weapon"+str(x)+".png") for x in range(1, 5)]
 
         # Gage
-        Gage.image_red                  = load_image("gage-red.png")
-        Gage.image_blue                 = load_image("gage-blue.png")
-        GageSeparator.image             = load_image("gage-separator.png")
+        Gage.texture_red                  = load_image("gage-red.png")
+        Gage.texture_blue                 = load_image("gage-blue.png")
+        GageSeparator.texture             = load_image("gage-separator.png")
 
 
         # Select
-        DescriptionSelect.images        = load_image("description.png", 7)  #FIXME
-        HighlightSelect.image           = load_image("highlight.png")
-        SidebarSelect.images            = [load_image("sidebar"+str(x)+".png").convert() for x in range(1, 8)]
+        DescriptionSelect.textures        = load_image("description.png", 7)  #FIXME
+        HighlightSelect.texture           = load_image("highlight.png")
+        SidebarSelect.textures            = [load_image("sidebar"+str(x)+".png").convert() for x in range(1, 8)]
 
         # Help
-        BackgroundHelp.images           = [load_image("help-background"+str(x)+".png").convert() for x in range(10)]
-        ContentsHelp.image              = load_image('help-contents.png')
+        BackgroundHelp.textures           = [load_image("help-background"+str(x)+".png").convert() for x in range(10)]
+        ContentsHelp.texture              = load_image('help-contents.png')
 
         # Load background
-        BackgroundStart.image           = load_image("start.jpg")
-        BackgroundSelect.image          = load_image("select.jpg")
-        BackgroundPlay.images           = load_image("play.jpg", 5, True)
+        BackgroundStart.texture           = load_image("start.jpg")
+        BackgroundSelect.texture          = load_image("select.jpg")
+        BackgroundPlay.textures           = load_image("play.jpg", 5, True)
 
         # GameOver
-        BackgroundGameover.loseimage    = load_image("gameover-lose.jpg")
-        BackgroundGameover.winimage     = load_image("gameover-win.jpg")
-
+        BackgroundGameover.losetexture    = load_image("gameover-lose.jpg")
+        BackgroundGameover.wintexture     = load_image("gameover-win.jpg")
+        print 'a'
         # Initialize Game object
         self.game_state = CREDIT
         self.gamedata = GameData()
-        self.creditdraw = CreditDraw()
-        self.startdraw = StartDraw()
-        self.selectdraw = SelectDraw()
+#        self.creditdraw = CreditDraw()
+#        self.startdraw = StartDraw()
+#        self.selectdraw = SelectDraw()
+        self.gamedata.initlevel(1)
+        self.playdraw = PlayDraw(self.gamedata)
+        self.game_state = PLAY
+
 
         self.on_key_down = self.handle_key_presses
 
@@ -108,6 +126,8 @@ class Guerrilla(GlossGame):
     def draw(self):
         """Draw game"""
 
+        glClear(GL_COLOR_BUFFER_BIT)
+
         if self.game_state == CREDIT:
             drawer = self.creditdraw
 
@@ -126,7 +146,7 @@ class Guerrilla(GlossGame):
         elif self.game_state == HELP:
             drawer = self.helpdraw
 
-        return drawer.draw(screen)
+        return drawer.draw()
 
 
     def handle_key_presses(self, event):
@@ -163,7 +183,7 @@ class Guerrilla(GlossGame):
 
 
 game = Guerrilla("Guerrilla Live(!)")
-Gloss.screen_resolution = SCR_RECT.size
+Gloss.screen_resolution = 1024, 768
 Gloss.full_screen = False
 game.run()
 

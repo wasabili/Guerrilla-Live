@@ -18,21 +18,19 @@ class CreditDraw():
 
     def __init__(self):
         # Sprite Group
-        self.credit_all = LayeredDirty()
+        self.credit_all = BaseGroup()
 
         # Register groups to sprites
         AuthorCredit.containers = self.credit_all
 
         # Objects
-        self.credit_bg = pygame.Surface(SCR_RECT.size, HWSURFACE)
-        self.credit_bg.fill((0,0,0))
         self.author = AuthorCredit()
     
     def update(self):
         self.credit_all.update()
 
     def draw(self, screen):
-        return self.credit_all.draw(screen, self.credit_bg)
+        self.credit_all.draw()
 
     def hasfinished(self):
         return self.author.hasfinished()
