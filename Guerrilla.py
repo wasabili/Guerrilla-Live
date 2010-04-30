@@ -12,26 +12,31 @@ from lib.gamedata   import GameData
 
 from gloss          import GlossGame, Gloss
 
+os.environ['SDL_VIDEO_CENTERED'] = '1'
+os.environ['SDL_AUDIODRIVER'] = 'esd'
+
 class Guerrilla(GlossGame):
 
     def load_content(self):
 
         def load_image(filename, split=None):
             if split is None:
-                yield Texture(os.path.join("data", filename))
+                return Texture(os.path.join("data", filename))
             else:
                 image_list = []
                 image = pygame.image.load(os.path.join("data", filename))
                 w = image.get_width()
                 h = image.get_height()
-                for i in range(0, w, w/n):
-                    surface = pygame.Surface((w1,h), image.get_flags())
-                    surface.blit(image, (0,0), (i,0,w1,h))
-                    yield Texture(surface)
+                for i in range(0, w/split, w):
+                    surface = pygame.Surface((w/split,h), image.get_flags())
+                    surface.blit(image, (0,0), (i,0,w/split,h))
+                    image_list += [Texture(surface)]
+                return image_list
 
         """Load images"""
         # Register images into sprites
         Player.textures                   = load_image("player.png", 480)
+        print len(Player.textures)
         Shot.texture                 = load_image("shot.png")
         EColi.textures                    = load_image("ecoli.png", 3)
         EColi2.textures                   = load_image("ecoli2.png", 2)
@@ -48,23 +53,23 @@ class Guerrilla(GlossGame):
         GageSeparator.texture             = load_image("gage-separator.png")
 
 
-        # Select
-        DescriptionSelect.textures        = load_image("description.png", 7)  #FIXME
-        HighlightSelect.texture           = load_image("highlight.png")
-        SidebarSelect.textures            = [load_image("sidebar"+str(x)+".png").convert() for x in range(1, 8)]
+#        # Select
+#        DescriptionSelect.textures        = load_image("description.png", 7)  #FIXME
+#        HighlightSelect.texture           = load_image("highlight.png")
+#        SidebarSelect.textures            = [load_image("sidebar"+str(x)+".png").convert() for x in range(1, 8)]
 
-        # Help
-        BackgroundHelp.textures           = [load_image("help-background"+str(x)+".png").convert() for x in range(10)]
-        ContentsHelp.texture              = load_image('help-contents.png')
+#        # Help
+#        BackgroundHelp.textures           = [load_image("help-background"+str(x)+".png").convert() for x in range(10)]
+#        ContentsHelp.texture              = load_image('help-contents.png')
 
-        # Load background
-        BackgroundStart.texture           = load_image("start.jpg")
-        BackgroundSelect.texture          = load_image("select.jpg")
-        BackgroundPlay.textures           = load_image("play.jpg", 5, True)
+#        # Load background
+#        BackgroundStart.texture           = load_image("start.jpg")
+#        BackgroundSelect.texture          = load_image("select.jpg")
+        BackgroundPlay.textures           = load_image("play.jpg", 5)
 
-        # GameOver
-        BackgroundGameover.losetexture    = load_image("gameover-lose.jpg")
-        BackgroundGameover.wintexture     = load_image("gameover-win.jpg")
+#        # GameOver
+#        BackgroundGameover.losetexture    = load_image("gameover-lose.jpg")
+#        BackgroundGameover.wintexture     = load_image("gameover-win.jpg")
 
         # Initialize Game object
         self.game_state = CREDIT
@@ -124,7 +129,7 @@ class Guerrilla(GlossGame):
     def draw(self):
         """Draw game"""
 
-        glClear(GL_COLOR_BUFFER_BIT)
+        gloss.Gloss.clear(gloss.Color.WHITE)
 
         if self.game_state == CREDIT:
             drawer = self.creditdraw
@@ -144,7 +149,7 @@ class Guerrilla(GlossGame):
         elif self.game_state == HELP:
             drawer = self.helpdraw
 
-        return drawer.draw()
+        drawer.draw()
 
 
     def handle_key_presses(self, event):

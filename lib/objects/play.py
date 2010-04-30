@@ -2,16 +2,15 @@
 #-*- coding:utf-8 -*-
 
 import pygame
-from pygame.locals import *
+from pygame.locals  import *
+from pygame.sprite  import Group, groupcollide, spritecollide
 from gloss          import *
 import math
 import random
 import time
 from collections    import deque
 
-from lib.sprite     import *
 from lib.constants  import *
-from lib.utils      import *
 from base           import *
 
 
@@ -102,13 +101,12 @@ class PlayDraw():
     def update(self):
         self.play_all.update()
 
-
         # Manage game system
-#        if not self.gameover:
-#            self.manage_weapon_system()
-#            self.manage_enemies()
-#        else:
-#            self.gameend_timer -= 1
+        if not self.gameover:
+            self.manage_weapon_system()
+            self.manage_enemies()
+        else:
+            self.gameend_timer -= 1
 
 
     def draw(self):
@@ -303,7 +301,7 @@ class BackgroundPlay(BaseSprite):
     """Background follows player's move"""
 
     def __init__(self, level):
-        self.texture = self.texs[level-1]
+        self.texture = self.textures[level-1]
         BaseSprite.__init__(self)
 
         self.scale = 1.2
@@ -332,7 +330,6 @@ class Player(BaseSprite):
     dynamic_fc = 0.05
     max_speed = 4
 
-    frame = 0L
     animecycle = 2
 
     lives = 3 #FIXME FIXME
@@ -342,7 +339,7 @@ class Player(BaseSprite):
 
     def __init__(self):
         self.texture = self.textures[0]
-        BaseSprite.__init__(self, self.containers)
+        BaseSprite.__init__(self)
         
         self.rect = Rect(0, 0, self.rect.width*3/4, self.rect.height*3/4)  #FIXME TEST
         self.rect.center = CENTER
@@ -458,13 +455,14 @@ class Shot(BaseSprite):
     speed = 9  # 移動速度
 
     def __init__(self, start, target=None, degree=None):
-        BaseSprite.__init__(self, self.containers)
+        BaseSprite.__init__(self)
 
         self.rect.center = start
+        direction = math.atan2(target[1]-start[1], target[0]-start[0])
         if degree is None:
-            self.rotation = -180*(math.atan2(target[1]-start[1], target[0]-start[0]))/math.pi
+            self.rotation = 180*(direction)/math.pi
         else:
-            self.rotation = -degree
+            self.rotation = degree
 
         self.fpx = float(self.rect.x)
         self.fpy = float(self.rect.y)
@@ -474,10 +472,11 @@ class Shot(BaseSprite):
 
     def init(self, start, target=None, degree=None):
         self.rect.center = start
+        direction = math.atan2(target[1]-start[1], target[0]-start[0])
         if degree is None:
-            self.rotation = -180*(math.atan2(target[1]-start[1], target[0]-start[0]))/math.pi
+            self.rotation = 180*(direction)/math.pi
         else:
-            self.rotation = -degree
+            self.rotation = degree
 
         self.fpx = float(self.rect.x)
         self.fpy = float(self.rect.y)
@@ -537,7 +536,7 @@ class Bomb(BaseSprite):
     def __init__(self):
         self.base_img = pygame.Surface(SCR_RECT.size, SRCALPHA|HWSURFACE)
         self.image = Texture(self.base_img)
-        BaseSprite.__init__(self, self.containers)
+        BaseSprite.__init__(self)
 
         self.start = player_pos
         self.radius = 5
@@ -567,7 +566,7 @@ class EColi(BaseSprite):
 
     def __init__(self, pos):
         self.texture = self.textures[0]
-        BaseSprite.__init__(self, self.containers)
+        BaseSprite.__init__(self)
 
         self.rect.center = pos
 
@@ -629,7 +628,7 @@ class EColi2(BaseSprite):
 
     def __init__(self, pos):
         self.texture = self.textures[0]
-        BaseSprite.__init__(self, self.containers)
+        BaseSprite.__init__(self)
 
         self.rect.center = pos
 
@@ -709,7 +708,7 @@ class BigEColi(BaseSprite):
 
     def __init__(self):
         self.texture = self.textures[0]
-        BaseSprite.__init__(self, self.containers)
+        BaseSprite.__init__(self)
 
         self.rect = Rect(self.rect.width*1/8, self.rect.height*1/8, self.rect.width*3/4, self.rect.height*3/4)  #TODO test
         self.rect.center = (-self.rect.width/2, -self.rect.height/2)
@@ -786,7 +785,7 @@ class Explosion(BaseSprite):
 
     def __init__(self, pos):
         self.texture = self.textures[0]
-        BaseSprite.__init__(self, self.containers)
+        BaseSprite.__init__(self)
 
         self.rect.center = pos
 
@@ -843,7 +842,7 @@ class HeartMark(BaseSprite):
 
     def __init__(self, pos):
         self.texture = self.textures[0]
-        BaseSprite.__init__(self, self.containers)
+        BaseSprite.__init__(self)
 
         self.rect.center = pos
 
@@ -879,7 +878,7 @@ class Gage(BaseSprite):
 
     def __init__(self, gamedata):
         self.texture = self.texture_red
-        BaseSprite.__init__(self, self.containers)
+        BaseSprite.__init__(self)
 
         self.rect.topleft = self.pos
 
@@ -919,7 +918,7 @@ class GageMask(BaseSprite):
         image = pygame.Surface((self.max_width, self.max_height))
         image.fill((0,0,0))
         self.texture = Texture(image)
-        BaseSprite.__init__(self, self.containers)
+        BaseSprite.__init__(self)
 
         self.topright = (pos[0]+self.border_length+self.max_width, pos[1]+self.border_length)
         self.rect.topright = self.topright
@@ -941,7 +940,7 @@ class GageMask(BaseSprite):
 class GageSeparator(BaseSprite):
 
     def __init__(self, pos):
-        BaseSprite.__init__(self, self.containers)
+        BaseSprite.__init__(self)
 
         self.rect.topleft = pos
 
@@ -996,7 +995,7 @@ class WeaponPanelPart(BaseSprite):
 
     def __init__(self, texture, y):
         self.texture = texture
-        BaseSprite.__init__(self, self.containers)
+        BaseSprite.__init__(self)
 
         self.rect.topright = (0, y)
 
@@ -1041,13 +1040,11 @@ class WeaponSelector(BaseSprite):
     x = 160
 
     def __init__(self):
-        BaseSprite.__init__(self, self.containers)
+        BaseSprite.__init__(self)
 
         # Create images
         self.arrow_dark = self.texture
-        self.arrow_none = Texture(pygame.Surface((0,0), HWSURFACE))
 
-        self.texture = self.arrow_none
         self.frame = 0
         self.visible = False
 
@@ -1056,9 +1053,11 @@ class WeaponSelector(BaseSprite):
         if self.visible:
             if self.frame/self.animecycle%2 == 0:
                 self.texture = self.arrow_dark
-            else:
-                self.texture = self.arrow_none
             self.frame += 1
+
+    def draw(self):
+        if self.visible:
+            BaseSprite.draw(self)
 
     def change(self, y):
 
@@ -1076,7 +1075,7 @@ class DisplayWeapon(BaseSprite):
 
     def __init__(self, gamedata):
         self.texture = self.textures[0]
-        BaseSprite.__init__(self, self.containers)
+        BaseSprite.__init__(self)
 
         self.rect.topleft = self.pos
 

@@ -3,25 +3,25 @@
 
 import pygame
 from pygame.locals  import *
-from gloss          import *
+import gloss
 
-from lib.sprite import *
 from lib.constants import *
 
-class BaseSprite(Sprite, gloss.Sprite):
+class BaseSprite(gloss.Sprite, pygame.sprite.Sprite):
 
     opaque = 1.0
     rotation = 0.0
     scale = 1.0
 
-    def __init__(self, texture, position=None):
+    def __init__(self, texture=None, position=None):
         pygame.sprite.Sprite.__init__(self, self.containers)
         gloss.Sprite.__init__(self, self.texture)
 
         self.rect = pygame.rect.Rect(0, 0, self.texture.width, self.texture.height)
 
     def draw(self):
-        gloss.Sprite.draw(self, position = self.rect.topleft, rotation = self.rotation, origin = (0, 0), scale = self.scale, color = (1.0, 1.0, 1.0, self.opaque))
+        color = gloss.Color(1, 1, 1, self.opaque)
+        gloss.Sprite.draw(self, position = self.rect.topleft, rotation = self.rotation, origin = (0, 0), scale = self.scale, color = color)
 
 class BaseGroup(pygame.sprite.LayeredUpdates):
 
