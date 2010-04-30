@@ -3,7 +3,6 @@
 
 from pygame.locals import *
 
-DATA_DIR = 'data'
 START, PLAY, GAMEOVER, SELECT, HELP, CREDIT = range(6)  # states of a game
 WIDTH = 1024
 HEIGHT = 768

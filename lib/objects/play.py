@@ -530,28 +530,23 @@ class SextupleShot():
         recycle_or_gen_object(Shot, start, None, degree+300 if degree+300<180 else degree-60)
         del self
 
-class Bomb(BaseSprite): # FIXME FIXME
+class Bomb(BaseSprite):
 
     speed = 30
 
     def __init__(self):
         self.base_img = pygame.Surface(SCR_RECT.size, SRCALPHA|HWSURFACE)
-        self.image = self.base_img.copy()
-        self.texture = Texture(self.image)
+        self.image = Texture(self.base_img)
         BaseSprite.__init__(self, self.containers)
-
-        self.base_img = pygame.Surface(SCR_RECT.size, SRCALPHA|HWSURFACE)
-        self.image = self.base_img.copy()
-        self.rect = SCR_RECT
 
         self.start = player_pos
         self.radius = 5
         self.width = 1
 
     def update(self):
-        self.image = self.base_img.copy()
-        pygame.draw.circle(self.image, (255,255,255), self.start, self.radius, self.width)
-        self.texture = Texture(self.image)
+        image = self.base_img.copy()
+        pygame.draw.circle(image, (255,255,255), self.start, self.radius, self.width)
+        self.texture = Texture(image)
 
         self.radius += self.speed
 
