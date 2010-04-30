@@ -302,6 +302,7 @@ class SidebarSelect(BaseSprite):
     frames = int(255/speed)
 
     def __init__(self):
+        self.texture = self.textures[0]
         BaseSprite.__init__(self)
  
         self.rect.topleft = (-50, 0)
@@ -351,7 +352,7 @@ class SidebarSelect(BaseSprite):
             self.image = self.images[self.index].copy()
 
     def init(self):
-        self.image = self.images[0].copy().convert_alpha()
+        self.texture = self.textures[0]
         self.index = 0
         self.remains = 0
         self.up = False
