@@ -2,7 +2,7 @@
 #-*- coding:utf-8 -*-
 
 # FIXME only drawing object
-#from credit import *
+from credit import *
 #from gameover import *
 #from help import *
 from play import *

@@ -8,7 +8,7 @@ import time
 from lib.constants  import SCR_RECT
 from base           import *
 
-from gloss          import Color, Texture
+from gloss          import Gloss, Color, Texture
 
 
 #########################################################################################
@@ -327,11 +327,9 @@ class SidebarSelect(BaseSprite):
         count = len(self.image_list)
         for i in range(count):
             self.image_list[i][1] += self.speed
-            print self.image_list[i][1],
             if self.image_list[i][1] >= 1.0:
-                self.image_last = i
+                self.image_last = self.image_list[i][0]
 
-        print self.image_list, self.image_last
         self.image_list = filter(lambda x:x[1] < 1.0, self.image_list)
 
     def draw(self):
@@ -366,4 +364,6 @@ class EffectSelect(BaseSprite):
         else:
             self.opaque += self.speed
 
+    def draw(self):
+        Gloss.clear(color = Color(0,0,0, self.opaque))
 

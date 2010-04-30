@@ -70,11 +70,11 @@ class Guerrilla(GlossGame):
 #        BackgroundGameover.wintexture     = load_image("gameover-win.jpg")
 
         # Initialize Game object
-#        self.creditdraw = CreditDraw()
+        self.creditdraw = CreditDraw()
 #        self.startdraw = StartDraw()
         self.selectdraw = SelectDraw()
 
-        self.game_state = SELECT #FIXME
+        self.game_state = CREDIT #FIXME
         self.init_game()
 
 
@@ -92,12 +92,12 @@ class Guerrilla(GlossGame):
     def update(self):
         """Update state of a game"""
 
-        #print Gloss.elapsed_seconds TODO
+        print Gloss.elapsed_seconds #TODO
 
         if self.game_state == CREDIT:
             self.creditdraw.update()
             if self.creditdraw.hasfinished():
-                self.pendingchangestate(START)
+                self.game_state = SELECT
 
         elif self.game_state == START:
             self.startdraw.update()

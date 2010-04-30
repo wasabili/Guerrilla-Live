@@ -4,9 +4,7 @@
 import pygame
 from pygame.locals import *
 
-from lib.sprite     import *
 from lib.constants  import *
-from lib.utils      import set_transparency_to_surf
 from base           import *
 
 #########################################################################################
@@ -29,28 +27,28 @@ class CreditDraw():
     def update(self):
         self.credit_all.update()
 
-    def draw(self, screen):
+    def draw(self):
         self.credit_all.draw()
 
     def hasfinished(self):
         return self.author.hasfinished()
 
 
-class AuthorCredit(StringSpriteBase):
+class AuthorCredit(BaseSpriteFont):
     """Start Background"""
 
     FADEIN, WAIT, FADEOUT, EXTRA, END = range(5)
     state = FADEIN
     y = SCR_RECT.height/2
     text = 'Wasabi Presents'
-    color = (255, 255, 255)
-    fontsize = 20
+    color = (1.0, 1.0, 1.0)
+    fontsize = 10
     
     def __init__(self):
-        StringSpriteBase.__init__(self)
-        self.dirty = 2
+        BaseSpriteFont.__init__(self)
 
-        self.original_image = self.image.copy()
+        self.y -= self.measure_string(self.text)[1]/2
+
         self.frame = 0
         self.opaque = 0
         self.speed = 3
@@ -82,9 +80,6 @@ class AuthorCredit(StringSpriteBase):
             if self.frame > self.extra:
                 self.state = self.END
         
-        self.image = self.original_image.copy()
-        set_transparency_to_surf(self.image, self.opaque)
-
         self.frame += 1
 
     def hasfinished(self):
