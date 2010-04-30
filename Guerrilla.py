@@ -27,7 +27,7 @@ class Guerrilla(GlossGame):
                 image = pygame.image.load(os.path.join("data", filename))
                 w = image.get_width()
                 h = image.get_height()
-                for i in range(0, w/split, w):
+                for i in range(0, w, w/split):
                     surface = pygame.Surface((w/split,h), image.get_flags())
                     surface.blit(image, (0,0), (i,0,w/split,h))
                     image_list.append(Texture(surface))
@@ -36,7 +36,6 @@ class Guerrilla(GlossGame):
         """Load images"""
         # Register images into sprites
         Player.textures                   = load_image("player.png", 480)
-        print len(Player.textures)
         Shot.texture                 = load_image("shot.png")
         EColi.textures                    = load_image("ecoli.png", 3)
         EColi2.textures                   = load_image("ecoli2.png", 2)

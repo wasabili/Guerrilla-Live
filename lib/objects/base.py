@@ -21,7 +21,8 @@ class BaseSprite(gloss.Sprite, pygame.sprite.Sprite):
 
     def draw(self):
         color = gloss.Color(1, 1, 1, self.opaque)
-        gloss.Sprite.draw(self, position = self.rect.topleft, rotation = self.rotation, origin = (0, 0), scale = self.scale, color = color)
+        origin = None if self.rotation != 0.0 else (0, 0)
+        gloss.Sprite.draw(self, position = self.rect.topleft, rotation = self.rotation, origin = origin, scale = self.scale, color = color)
 
 class BaseGroup(pygame.sprite.LayeredUpdates):
 

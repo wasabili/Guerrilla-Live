@@ -332,7 +332,7 @@ class Player(BaseSprite):
 
     animecycle = 2
 
-    lives = 3 #FIXME FIXME
+    lives = 3
     hearts = []
     invincible = -1
     blink_interval = 10
@@ -458,11 +458,12 @@ class Shot(BaseSprite):
         BaseSprite.__init__(self)
 
         self.rect.center = start
-        direction = math.atan2(target[1]-start[1], target[0]-start[0])
         if degree is None:
+            direction = math.atan2(target[1]-start[1], target[0]-start[0])
             self.rotation = 180*(direction)/math.pi
         else:
             self.rotation = degree
+            direction = math.radians(degree)
 
         self.fpx = float(self.rect.x)
         self.fpy = float(self.rect.y)
@@ -472,11 +473,12 @@ class Shot(BaseSprite):
 
     def init(self, start, target=None, degree=None):
         self.rect.center = start
-        direction = math.atan2(target[1]-start[1], target[0]-start[0])
         if degree is None:
+            direction = math.atan2(target[1]-start[1], target[0]-start[0])
             self.rotation = 180*(direction)/math.pi
         else:
             self.rotation = degree
+            direction = math.radians(degree)
 
         self.fpx = float(self.rect.x)
         self.fpy = float(self.rect.y)
@@ -508,7 +510,7 @@ class TripleShot():
 
     def __init__(self, start, target):
         direction = math.atan2(target[1]-start[1], target[0]-start[0])
-        degree = -180*direction/math.pi
+        degree = 180*direction/math.pi
         recycle_or_gen_object(Shot, start, None, degree)
         recycle_or_gen_object(Shot, start, None, degree+120 if degree+120<180 else degree-240)
         recycle_or_gen_object(Shot, start, None, degree+240 if degree+240<180 else degree-120)
@@ -520,7 +522,7 @@ class SextupleShot():
 
     def __init__(self, start, target):
         direction = math.atan2(target[1]-start[1], target[0]-start[0])
-        degree = -180*direction/math.pi
+        degree = 180*direction/math.pi
         recycle_or_gen_object(Shot, start, None, degree)
         recycle_or_gen_object(Shot, start, None, degree+60 if degree+60<180 else degree-300)
         recycle_or_gen_object(Shot, start, None, degree+120 if degree+120<180 else degree-240)
@@ -597,7 +599,7 @@ class EColi(BaseSprite):
         target = player_pos
         start = self.rect.center
         direction = math.atan2(target[1]-start[1], target[0]-start[0])
-        self.rotation = -180*direction/math.pi
+        self.rotation = 180*direction/math.pi
 
         # Move
         fpvx = math.cos(direction) * self.speed
@@ -671,7 +673,7 @@ class EColi2(BaseSprite):
         direction = math.atan2(target[1]-start[1], target[0]-start[0])
 
         # rotate
-        self.rotation = -180*direction/math.pi
+        self.rotation = 180*direction/math.pi
 
         # Move
         fpvx = math.cos(direction) * self.speed
@@ -923,18 +925,28 @@ class GageMask(BaseSprite):
         self.topright = (pos[0]+self.border_length+self.max_width, pos[1]+self.border_length)
         self.rect.topright = self.topright
 
+        self.visible = True
         self.gamedata = gamedata
 
     def update(self):
-        self.dirty = 1
-
         percent = float(self.gamedata.subweapon_counter)/self.gamedata.gage_limit
 
-        image = pygame.Surface((self.max_width*(1-percent), self.max_height))
+        width = self.max_width*(1-percent)
+        if width == 0:
+            self.visible = False
+            return
+        else:
+            self.visible = True
+
+        image = pygame.Surface((width, self.max_height))
         image.fill((0,0,0))
         self.rect = image.get_rect()
         self.texture = Texture(image)
         self.rect.topright = self.topright
+
+    def draw(self):
+        if self.visible:
+            BaseSprite.draw(self)
 
 
 class GageSeparator(BaseSprite):
@@ -1047,16 +1059,16 @@ class WeaponSelector(BaseSprite):
 
         self.frame = 0
         self.visible = False
+        self.draw_image = False
 
     def update(self):
 
         if self.visible:
-            if self.frame/self.animecycle%2 == 0:
-                self.texture = self.arrow_dark
+            self.draw_image = (self.frame/self.animecycle%2 == 0)
             self.frame += 1
 
     def draw(self):
-        if self.visible:
+        if self.visible and self.draw_image:
             BaseSprite.draw(self)
 
     def change(self, y):
@@ -1066,7 +1078,6 @@ class WeaponSelector(BaseSprite):
         self.visible = True
 
     def hide(self):
-        self.texture = self.arrow_none
         self.visible = False
 
 class DisplayWeapon(BaseSprite):
