@@ -10,7 +10,7 @@ from lib.constants  import *
 from lib.objects    import *
 from lib.gamedata   import GameData
 
-from gloss.gloss       import *
+from gloss          import GlossGame, Gloss
 
 class Guerrilla(GlossGame):
 
@@ -117,7 +117,7 @@ class Guerrilla(GlossGame):
             self.gameoverdraw.update()
 
         elif self.game_state == HELP:
-            #self.selectdraw.update()  #FIXME
+            #self.selectdraw.update()  #TODO
             self.helpdraw.update()
             if self.helpdraw.hasclosed():
                 self.pendingchangestate(SELECT)
@@ -163,7 +163,7 @@ class Guerrilla(GlossGame):
             elif self.game_state == SELECT:
                 index = self.selectdraw.get_index()
                 if index == 0:
-                    print 'ARCADE MODE is selected'  #FIXME
+                    print 'ARCADE MODE is selected'  #TODO
                 elif index in range(1, 6):
                     self.gamedata.initlevel(index)
                     self.playdraw = PlayDraw(self.gamedata)
