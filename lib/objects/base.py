@@ -39,24 +39,19 @@ class BaseSpriteFont(gloss.SpriteFont):
 
     y = 0           # abstract
     x = None        # abstract
-    fontfamily = None   # abstract
     fontsize = 0    # abstract
     text = ''       # abstract
     color = (0,0,0) # abstract
+    rotation = 0.0
+    scale = 1.0
+    opaque = 1.0
 
-    def __init__(self):
+    def __init__(self, filename="DejaVuSans.ttf", size = 18, bold = False, underline = False, startcharacter = 32, endcharacter = 126):
+        gloss.SpriteFont.__init__(self, filename="DejaVuSans.ttf", size = self.fontsize, bold = False, underline = False, startcharacter = 32, endcharacter = 126)
 
-        self.font = pygame.font.SysFont(self.fontfamily, self.fontsize)
-        self.image = self.font.render(self.text, True, self.color)
+    def draw(self, text = "Hello, Gloss!", position = (0, 0), rotation = 0.0, scale = 1.0, color = Color.WHITE, letterspacing = 0, linespacing = 0):
+        gloss.SpriteFont.draw(self, text=self.text, position = (self.x, self.y), rotation = self.rotation, scale = self.scale, color = (*self.color, self.opaque))
 
-        self.rect = self.image.get_rect()
-        if self.x is None:
-            self.rect.x = (SCR_RECT.width-self.image.get_width())/2
-        else:
-            self.rect.x = self.x
-        self.rect.y = self.y
 
-    def update(self):
-        pass
 
 

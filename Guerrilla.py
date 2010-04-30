@@ -52,10 +52,10 @@ class Guerrilla(GlossGame):
         GageSeparator.texture             = load_image("gage-separator.png")
 
 
-#        # Select
-#        DescriptionSelect.textures        = load_image("description.png", 7)  #FIXME
-#        HighlightSelect.texture           = load_image("highlight.png")
-#        SidebarSelect.textures            = [load_image("sidebar"+str(x)+".png").convert() for x in range(1, 8)]
+        # Select
+        DescriptionSelect.textures        = load_image("description.png", 7)  #FIXME
+        HighlightSelect.texture           = load_image("highlight.png")
+        SidebarSelect.textures            = [load_image("sidebar"+str(x)+".png").convert() for x in range(1, 8)]
 
 #        # Help
 #        BackgroundHelp.textures           = [load_image("help-background"+str(x)+".png").convert() for x in range(10)]
@@ -63,7 +63,7 @@ class Guerrilla(GlossGame):
 
 #        # Load background
 #        BackgroundStart.texture           = load_image("start.jpg")
-#        BackgroundSelect.texture          = load_image("select.jpg")
+        BackgroundSelect.texture          = load_image("select.jpg")
         BackgroundPlay.textures           = load_image("play.jpg", 5)
 
 #        # GameOver
@@ -71,26 +71,22 @@ class Guerrilla(GlossGame):
 #        BackgroundGameover.wintexture     = load_image("gameover-win.jpg")
 
         # Initialize Game object
-        self.game_state = CREDIT
-        self.gamedata = GameData()
 #        self.creditdraw = CreditDraw()
 #        self.startdraw = StartDraw()
-#        self.selectdraw = SelectDraw()
-        self.gamedata.initlevel(1)
-        self.playdraw = PlayDraw(self.gamedata)
-        self.game_state = PLAY
+        self.selectdraw = SelectDraw()
+
+        self.game_state = SELECT #FIXME
+        self.init_game()
 
 
         self.on_key_down = self.handle_key_presses
 
 
-    def init_game(self, first=True):
+    def init_game(self):
         """Initialize Game object"""
 
         # Init data
-        self._pending_game_state = None
         self.gamedata = GameData()
-
         self.selectdraw.init()
 
 
@@ -169,10 +165,10 @@ class Guerrilla(GlossGame):
                 elif index in range(1, 6):
                     self.gamedata.initlevel(index)
                     self.playdraw = PlayDraw(self.gamedata)
-                    self.pendingchangestate(PLAY)
+                    self.game_state = PLAY
                 elif index == 6:
                     self.helpdraw = HelpDraw()
-                    self.pendingchangestate(HELP)
+                    self.game_state = HELP
 
             elif self.game_state == GAMEOVER:
                 self.init_game()

@@ -20,7 +20,7 @@ class SelectDraw():
 
     def __init__(self):
         # Sprite Group
-        self.select_all = LayeredDirty()
+        self.select_all = BaseGroup()
 
         # Register groups to sprites
         DescriptionSelect.containers        = self.select_all
@@ -31,6 +31,17 @@ class SelectDraw():
         LevelSelect.containers              = self.select_all
         HelpSelect.containers               = self.select_all
         EffectSelect.containers             = self.select_all
+
+        # Layer
+        BackgroundSelect._layer     = -100
+        ArcadeSelect._layer         = 100
+        LevelSelect._layer          = 100
+        HelpSelect._layer           = 100
+        HighlightSelect._layer      = 99
+        BlinkerSelect._layer        = 100
+        DescriptionSelect._layer    = 150
+        SidebarSelect._layer        = 150
+        EffectSelect._layer         = 200
 
         # Objects
         self.description = DescriptionSelect()
@@ -52,8 +63,8 @@ class SelectDraw():
     def update(self):
         self.select_all.update()
 
-    def draw(self, screen):
-        return self.select_all.draw(screen, BackgroundSelect.image)
+    def draw(self):
+        self.select_all.draw()
 
     def get_index(self):
         return self.highlight.get_index()
@@ -66,18 +77,17 @@ class SelectDraw():
         self.ef_select = EffectSelect()
 
 
-class BackgroundSelect(DirtySprite):
+class BackgroundSelect(BaseSprite):
     """Select Background"""
 
     def __init__(self):
-        DirtySprite.__init__(self, self.containers)
-        self.rect = self.image.get_rect()
+        BaseSprite.__init__(self)
 
     def update(self):
         pass
 
 
-class ArcadeSelect(StringSpriteBase):
+class ArcadeSelect(BaseSpriteFont):
 
     y = 270
     x = 350
@@ -86,10 +96,10 @@ class ArcadeSelect(StringSpriteBase):
     fontsize = 80
 
     def __init__(self):
-        StringSpriteBase.__init__(self)
+        BaseSpriteFont.__init__(self)
 
 
-class LevelSelect(StringSpriteBase):
+class LevelSelect(BaseSpriteFont):
 
     y = 350
     x = 350
@@ -100,10 +110,10 @@ class LevelSelect(StringSpriteBase):
     def __init__(self, num):
         self.text = self.text.format(num)
         self.y = self.y + 60*(num-1)
-        StringSpriteBase.__init__(self)
+        BaseSpriteFont.__init__(self)
 
 
-class HelpSelect(StringSpriteBase):
+class HelpSelect(BaseSpriteFont):
 
     y = 670
     x = 350
@@ -112,10 +122,10 @@ class HelpSelect(StringSpriteBase):
     fontsize = 80
 
     def __init__(self):
-        StringSpriteBase.__init__(self)
+        BaseSpriteFont.__init__(self)
 
 
-class HighlightSelect(DirtySprite):
+class HighlightSelect(BaseSprite):
 
     entrylist = [(350, 270), (350, 350), (350, 410), (350, 470), (350, 530), (350, 590), (350, 670)]
     diffx = -60
@@ -124,9 +134,8 @@ class HighlightSelect(DirtySprite):
     wait = 0.12
 
     def __init__(self, blinker, description, sidebar):
-        DirtySprite.__init__(self, self.containers)
+        BaseSprite.__init__(self)
 
-        self.rect = self.image.get_rect()
         self.rect.x = self.entrylist[0][0] + self.diffx
         self.rect.y = self.entrylist[0][1] + self.diffy
 
@@ -176,31 +185,33 @@ class HighlightSelect(DirtySprite):
         self.oldindex = 0
         self.index = 0
 
-class BlinkerSelect(DirtySprite):
+
+class BlinkerSelect(BaseSprite):
 
     animecycle = 4
     pos = (10, 5)
 
     def __init__(self):
-        DirtySprite.__init__(self, self.containers)
-        self.dirty = 2
-
         # Create images
-        self.blinkimage_light = pygame.Surface((30, 50), SRCALPHA|HWSURFACE)
-        self.blinkimage_light.fill((128,128,128,128))
-        self.blinkimage_none = pygame.Surface((0, 0), HWSURFACE)
+        self.texture = pygame.Surface((30, 50), SRCALPHA|HWSURFACE)
+        self.texture.fill((128,128,128,128))
+        BaseSprite.__init__(self)
 
-        self.rect = self.blinkimage_light.get_rect()
         self.rect.center = (315, 294)
+        self.draw_image = True
         self.frame = 0
 
     def update(self):
 
         if self.frame/self.animecycle%2 == 0:
-            self.image = self.blinkimage_light
+            self.draw_image = True
         else:
-            self.image = self.blinkimage_none
+            self.draw_image = False
         self.frame += 1
+
+    def draw(self):
+        if self.draw_image:
+            BaseSprite.draw(self)
 
     def change(self, index, up):
 
@@ -217,15 +228,16 @@ class DescriptionSelect():
 
     def __init__(self):
 
-        DescriptionPartSelect.containers = self.containers
+        DescriptionPartSelect.containers    = self.containers
+        DescriptionPartSelect._layer        = self._layer
         self.parts = []
-        self.parts.append(DescriptionPartSelect(self.images[0], 0))
-        self.parts.append(DescriptionPartSelect(self.images[1], DescriptionPartSelect.xlimit))
-        self.parts.append(DescriptionPartSelect(self.images[2], DescriptionPartSelect.xlimit))
-        self.parts.append(DescriptionPartSelect(self.images[3], DescriptionPartSelect.xlimit))
-        self.parts.append(DescriptionPartSelect(self.images[4], DescriptionPartSelect.xlimit))
-        self.parts.append(DescriptionPartSelect(self.images[5], DescriptionPartSelect.xlimit))
-        self.parts.append(DescriptionPartSelect(self.images[6], DescriptionPartSelect.xlimit))
+        self.parts.append(DescriptionPartSelect(self.textures[0], 0))
+        self.parts.append(DescriptionPartSelect(self.textures[1], DescriptionPartSelect.xlimit))
+        self.parts.append(DescriptionPartSelect(self.textures[2], DescriptionPartSelect.xlimit))
+        self.parts.append(DescriptionPartSelect(self.textures[3], DescriptionPartSelect.xlimit))
+        self.parts.append(DescriptionPartSelect(self.textures[4], DescriptionPartSelect.xlimit))
+        self.parts.append(DescriptionPartSelect(self.textures[5], DescriptionPartSelect.xlimit))
+        self.parts.append(DescriptionPartSelect(self.textures[6], DescriptionPartSelect.xlimit))
 
     def change(self, index, up):
         if up:
@@ -241,19 +253,17 @@ class DescriptionSelect():
             self.parts[i].init(DescriptionPartSelect.xlimit)
 
 
-
-class DescriptionPartSelect(DirtySprite):
+class DescriptionPartSelect(BaseSprite):
 
     anime = 15
     xstart = 290
     xlimit = 800
     speed = xlimit/anime
 
-    def __init__(self, image, x):
-        DirtySprite.__init__(self, self.containers)
+    def __init__(self, texture, x):
+        self.texture = texture
+        BaseSprite.__init__(self)
 
-        self.image = image
-        self.rect = self.image.get_rect()
         self.rect.x = self.xstart
         self.rect.y = 35
 
@@ -286,16 +296,14 @@ class DescriptionPartSelect(DirtySprite):
         self.vx = 0
 
 
-class SidebarSelect(DirtySprite):
+class SidebarSelect(BaseSprite):
  
     speed = 5
     frames = int(255/speed)
 
     def __init__(self):
-        DirtySprite.__init__(self, self.containers)
+        BaseSprite.__init__(self)
  
-        self.image = self.images[0].copy().convert_alpha()
-        self.rect = self.image.get_rect()
         self.rect.topleft = (-50, 0)
  
         self.index = 0
@@ -347,6 +355,7 @@ class SidebarSelect(DirtySprite):
         self.index = 0
         self.remains = 0
         self.up = False
+
 
 class EffectSelect(DirtySprite):
     """Select effects"""
