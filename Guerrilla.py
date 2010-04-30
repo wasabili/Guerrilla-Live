@@ -16,8 +16,6 @@ class Guerrilla(GlossGame):
 
     def load_content(self):
 
-        print 'ad'
-
         def load_image(filename, split=None):
             if split is None:
                 yield Texture(os.path.join("data", filename))
@@ -67,7 +65,7 @@ class Guerrilla(GlossGame):
         # GameOver
         BackgroundGameover.losetexture    = load_image("gameover-lose.jpg")
         BackgroundGameover.wintexture     = load_image("gameover-win.jpg")
-        print 'a'
+
         # Initialize Game object
         self.game_state = CREDIT
         self.gamedata = GameData()
