@@ -30,7 +30,7 @@ class Guerrilla(GlossGame):
                 for i in range(0, w/split, w):
                     surface = pygame.Surface((w/split,h), image.get_flags())
                     surface.blit(image, (0,0), (i,0,w/split,h))
-                    image_list += [Texture(surface)]
+                    image_list.append(Texture(surface))
                 return image_list
 
         """Load images"""
