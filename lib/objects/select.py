@@ -5,10 +5,10 @@ import pygame
 from pygame.locals import *
 import time
 
-from lib.sprite     import *
-from lib.constants  import *
-from lib.utils      import set_transparency_to_surf
+from lib.constants  import SCR_RECT
 from base           import *
+
+from gloss          import Color, Texture
 
 
 #########################################################################################
@@ -23,6 +23,7 @@ class SelectDraw():
         self.select_all = BaseGroup()
 
         # Register groups to sprites
+        BackgroundSelect.containers         = self.select_all
         DescriptionSelect.containers        = self.select_all
         SidebarSelect.containers            = self.select_all
         HighlightSelect.containers          = self.select_all
@@ -33,17 +34,18 @@ class SelectDraw():
         EffectSelect.containers             = self.select_all
 
         # Layer
-        BackgroundSelect._layer     = -100
+        BackgroundSelect._layer     = 0
         ArcadeSelect._layer         = 100
         LevelSelect._layer          = 100
         HelpSelect._layer           = 100
         HighlightSelect._layer      = 99
         BlinkerSelect._layer        = 100
-        DescriptionSelect._layer    = 150
-        SidebarSelect._layer        = 150
+        DescriptionSelect._layer    = 100
+        SidebarSelect._layer        = 50
         EffectSelect._layer         = 200
 
         # Objects
+        self.background = BackgroundSelect()
         self.description = DescriptionSelect()
         self.sidebar = SidebarSelect()
         self.blinker = BlinkerSelect()
@@ -83,8 +85,6 @@ class BackgroundSelect(BaseSprite):
     def __init__(self):
         BaseSprite.__init__(self)
 
-    def update(self):
-        pass
 
 
 class ArcadeSelect(BaseSpriteFont):
@@ -92,8 +92,8 @@ class ArcadeSelect(BaseSpriteFont):
     y = 270
     x = 350
     text = 'ARCADE MODE'
-    color = (255, 255, 255)
-    fontsize = 80
+    color = (1.0,1.0,1.0)
+    fontsize = 40
 
     def __init__(self):
         BaseSpriteFont.__init__(self)
@@ -104,8 +104,8 @@ class LevelSelect(BaseSpriteFont):
     y = 350
     x = 350
     text = 'LEVEL {0}'
-    color = (255, 255, 255)
-    fontsize = 80
+    color = (1.0, 1.0, 1.0)
+    fontsize = 40
 
     def __init__(self, num):
         self.text = self.text.format(num)
@@ -118,8 +118,8 @@ class HelpSelect(BaseSpriteFont):
     y = 670
     x = 350
     text = 'HELP'
-    color = (255, 255, 255)
-    fontsize = 80
+    color = (1.0, 1.0, 1.0)
+    fontsize = 40
 
     def __init__(self):
         BaseSpriteFont.__init__(self)
@@ -195,6 +195,7 @@ class BlinkerSelect(BaseSprite):
         # Create images
         self.texture = pygame.Surface((30, 50), SRCALPHA|HWSURFACE)
         self.texture.fill((128,128,128,128))
+        self.texture = Texture(self.texture)
         BaseSprite.__init__(self)
 
         self.rect.center = (315, 294)
@@ -298,8 +299,7 @@ class DescriptionPartSelect(BaseSprite):
 
 class SidebarSelect(BaseSprite):
  
-    speed = 5
-    frames = int(255/speed)
+    speed = 0.02
 
     def __init__(self):
         self.texture = self.textures[0]
@@ -311,80 +311,59 @@ class SidebarSelect(BaseSprite):
         self.remains = 0
         self.up = False 
 
-        self.sub_images = []
-        for i, image in enumerate(self.images):
-            for j in range(self.frames):
-                tmp = image.copy()
-                tmp.set_alpha(j*self.speed)
-                self.sub_images += [tmp]
+        # Settled Background
+        self.image_last = 0
+        # Now fading
+        self.image_list = []
+        self.image_list.append([0, 1.0])
 
     def change(self, index, up):
         self.up = up
         self.index = index
-        self.remains = self.frames
- 
+        self.image_list.append([index, 0.0])
+
     def update(self):
- 
-        if self.remains > 0 and not self.up:              # Animation has not finished
-            self.ditry = 1
 
-            i = self.frames-self.remains
-            j = self.index*self.frames+i
-            image = self.sub_images[j]
-            self.image.blit(image, (0,0))
+        count = len(self.image_list)
+        for i in range(count):
+            self.image_list[i][1] += self.speed
+            print self.image_list[i][1],
+            if self.image_list[i][1] >= 1.0:
+                self.image_last = i
 
-            self.remains -= 1
+        print self.image_list, self.image_last
+        self.image_list = filter(lambda x:x[1] < 1.0, self.image_list)
 
-        elif self.remains > 0 and self.up:
-            self.ditry = 1
-
-            i = self.frames-self.remains
-            j = self.index*self.frames+i
-            image = self.sub_images[j]
-            self.image.blit(image, (0,0))
-
-            self.remains -= 1
-
-        elif self.remains == 0:
-            self.dirty = 1
-
-            self.remains -= 1
-            self.image = self.images[self.index].copy()
+    def draw(self):
+        self.textures[self.image_last].draw(position = self.rect.topleft) #BG
+        for tex, opa in self.image_list:
+            self.textures[tex].draw(position = self.rect.topleft, color=Color(1.0, 1.0, 1.0, opa))
 
     def init(self):
         self.texture = self.textures[0]
         self.index = 0
         self.remains = 0
         self.up = False
+        self.image_list = [[0, 1.0]]
 
 
-class EffectSelect(DirtySprite):
+class EffectSelect(BaseSprite):
     """Select effects"""
 
-    speed = -10
+    speed = -0.04
 
     def __init__(self):
-        DirtySprite.__init__(self, self.containers)
+        self.texture = pygame.Surface(SCR_RECT.size, SRCALPHA|HWSURFACE)
+        self.texture.fill((0,0,0,1.0))
+        self.texture = Texture(self.texture)
+        BaseSprite.__init__(self)
 
-        self.none_image = pygame.Surface((0,0), HWSURFACE)
-        self.image = pygame.Surface(SCR_RECT.size, SRCALPHA|HWSURFACE)
-        self.image.fill((0,0,0,255))
-        self.rect = self.image.get_rect()
-
-        self.opaque = 255
+        self.opqaue = 1.0
 
     def update(self):
-        if self.opaque > 0:
-            self.dirty = 1
-
-            self.image.fill((0,0,0,self.opaque))
-
-            if self.opaque + self.speed > 0:
-                self.opaque += self.speed
-            else:
-                self.image = self.none_image
-                self.rect = Rect(0,0,0,0)
-                self.opaque = 0
-                self.dirty = 0
+        if self.opaque + self.speed <= 0:
+            self.kill()
+        else:
+            self.opaque += self.speed
 
 

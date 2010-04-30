@@ -4,7 +4,7 @@
 import pygame
 from pygame.locals  import *
 from pygame.sprite  import Group, groupcollide, spritecollide
-from gloss          import *
+
 import math
 import random
 import time
@@ -13,6 +13,7 @@ from collections    import deque
 from lib.constants  import *
 from base           import *
 
+from gloss          import *
 
 #########################################################################################
 #                     PLAYING ANIMATION                                                 #

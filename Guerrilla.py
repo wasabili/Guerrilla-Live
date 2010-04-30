@@ -12,6 +12,7 @@ from lib.gamedata   import GameData
 
 from gloss          import GlossGame, Gloss
 
+#gloss.enable_multisampling = True #TODO
 os.environ['SDL_VIDEO_CENTERED'] = '1'
 os.environ['SDL_AUDIODRIVER'] = 'esd'
 
@@ -35,27 +36,25 @@ class Guerrilla(GlossGame):
 
         """Load images"""
         # Register images into sprites
-        Player.textures                   = load_image("player.png", 480)
-        Shot.texture                 = load_image("shot.png")
-        EColi.textures                    = load_image("ecoli.png", 3)
-        EColi2.textures                   = load_image("ecoli2.png", 2)
-        BigEColi.textures                 = load_image("big-ecoli.png", 2)  #FIXME FIXME
-        Explosion.textures                = load_image("explosion.png", 16)
-        HeartMark.textures                = load_image("heart-animation.png", 96)
-        WeaponPanel.textures              = [load_image("weaponpanel"+str(x)+".png") for x in range(1, 4)]
-        WeaponSelector.texture            = load_image("weapon-selector-arrow.png")
-        DisplayWeapon.textures            = [load_image("current-weapon"+str(x)+".png") for x in range(1, 5)]
-
-        # Gage
-        Gage.texture_red                  = load_image("gage-red.png")
-        Gage.texture_blue                 = load_image("gage-blue.png")
-        GageSeparator.texture             = load_image("gage-separator.png")
+        Player.textures                     = load_image("player.png", 480)
+        Shot.texture                        = load_image("shot.png")
+        EColi.textures                      = load_image("ecoli.png", 3)
+        EColi2.textures                     = load_image("ecoli2.png", 2)
+        BigEColi.textures                   = load_image("big-ecoli.png", 2)  #FIXME FIXME
+        Explosion.textures                  = load_image("explosion.png", 16)
+        HeartMark.textures                  = load_image("heart-animation.png", 96)
+        WeaponPanel.textures                = [load_image("weaponpanel"+str(x)+".png") for x in range(1, 4)]
+        WeaponSelector.texture              = load_image("weapon-selector-arrow.png")
+        DisplayWeapon.textures              = [load_image("current-weapon"+str(x)+".png") for x in range(1, 5)]
+        Gage.texture_red                    = load_image("gage-red.png")
+        Gage.texture_blue                   = load_image("gage-blue.png")
+        GageSeparator.texture               = load_image("gage-separator.png")
 
 
         # Select
-        DescriptionSelect.textures        = load_image("description.png", 7)  #FIXME
-        HighlightSelect.texture           = load_image("highlight.png")
-        SidebarSelect.textures            = [load_image("sidebar"+str(x)+".png").convert() for x in range(1, 8)]
+        DescriptionSelect.textures          = load_image("description.png", 7)  #FIXME
+        HighlightSelect.texture             = load_image("highlight.png")
+        SidebarSelect.textures              = [load_image("sidebar"+str(x)+".png") for x in range(1, 8)]
 
 #        # Help
 #        BackgroundHelp.textures           = [load_image("help-background"+str(x)+".png").convert() for x in range(10)]
@@ -92,6 +91,8 @@ class Guerrilla(GlossGame):
 
     def update(self):
         """Update state of a game"""
+
+        #print Gloss.elapsed_seconds TODO
 
         if self.game_state == CREDIT:
             self.creditdraw.update()

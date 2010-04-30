@@ -4,8 +4,10 @@
 import pygame
 from pygame.locals  import *
 import gloss
+import os.path
 
 from lib.constants import *
+from gloss          import Color
 
 class BaseSprite(gloss.Sprite, pygame.sprite.Sprite):
 
@@ -35,10 +37,10 @@ class BaseGroup(pygame.sprite.LayeredUpdates):
 
 
 
-class BaseSpriteFont(gloss.SpriteFont):
+class BaseSpriteFont(gloss.SpriteFont, pygame.sprite.Sprite):
 
     y = 0           # abstract
-    x = None        # abstract
+    x = 0           # abstract
     fontsize = 0    # abstract
     text = ''       # abstract
     color = (0,0,0) # abstract
@@ -47,10 +49,11 @@ class BaseSpriteFont(gloss.SpriteFont):
     opaque = 1.0
 
     def __init__(self, filename="DejaVuSans.ttf", size = 18, bold = False, underline = False, startcharacter = 32, endcharacter = 126):
-        gloss.SpriteFont.__init__(self, filename="DejaVuSans.ttf", size = self.fontsize, bold = False, underline = False, startcharacter = 32, endcharacter = 126)
+        pygame.sprite.Sprite.__init__(self, self.containers)
+        gloss.SpriteFont.__init__(self, filename=os.path.join('data', filename), size = self.fontsize, bold = False, underline = False, startcharacter = 32, endcharacter = 126)
 
     def draw(self, text = "Hello, Gloss!", position = (0, 0), rotation = 0.0, scale = 1.0, color = Color.WHITE, letterspacing = 0, linespacing = 0):
-        gloss.SpriteFont.draw(self, text=self.text, position = (self.x, self.y), rotation = self.rotation, scale = self.scale, color = (*self.color, self.opaque))
+        gloss.SpriteFont.draw(self, text=self.text, position = (self.x, self.y), rotation = self.rotation, scale = self.scale, color = Color(self.color[0], self.color[1], self.color[2], self.opaque))
 
 
 
