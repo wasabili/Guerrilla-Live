@@ -348,10 +348,10 @@ class SidebarSelect(BaseSprite):
 class EffectSelect(BaseSprite):
     """Select effects"""
 
-    speed = -0.04
+    speed = -0.0004
 
     def __init__(self):
-        self.texture = pygame.Surface(SCR_RECT.size, SRCALPHA|HWSURFACE)
+        self.texture = pygame.Surface(SCR_RECT.size, SRCALPHA|HWSURFACE).convert_alpha()
         self.texture.fill((0,0,0,1.0))
         self.texture = Texture(self.texture)
         BaseSprite.__init__(self)
@@ -364,6 +364,4 @@ class EffectSelect(BaseSprite):
         else:
             self.opaque += self.speed
 
-    def draw(self):
-        Gloss.clear(color = Color(0,0,0, self.opaque))
 

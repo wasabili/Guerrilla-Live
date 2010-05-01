@@ -4,11 +4,8 @@
 import pygame
 from pygame.locals import *
 
-from lib.sprite     import *
 from lib.constants  import *
-from lib.utils      import set_transparency_to_surf
 from base           import *
-from start          import PushSpaceStart
 
 #########################################################################################
 #                     GAMEOVER ANIMATION                                                #
@@ -37,19 +34,18 @@ class GameoverDraw():
     def update(self):
         self.gameover_all.update()
 
-    def draw(self, screen):
-        return self.gameover_all.draw(screen)
+    def draw(self):
+        self.gameover_all.draw()
 
 
-class BackgroundGameover(DirtySprite):
+class BackgroundGameover(BaseSprite):
     """Background fades in when a player loses"""
 
     opaque = 255
     speed = -10
 
     def __init__(self, win, lastscreen):
-        DirtySprite.__init__(self, self.containers)
-        self.dirty = 2
+        BaseSprite.__init__(self)
 
         if win:
             self.image = self.winimage
@@ -80,45 +76,38 @@ class BackgroundGameover(DirtySprite):
             self.opaque += self.speed
         else:
             self.image = self.original_image
-            self.dirty = 1
 
 
-class ScoreGameover(StringSpriteBase):
+class ScoreGameover(BaseSprite):
 
     y = 300
     text = 'SCORE: {0}'
     color = (0, 0, 0)
-    fontsize = 60
+    fontsize = 30
 
     def __init__(self, score):
-        StringSpriteBase.__init__(self)
-        self.opaque = 10
-        self.speed = 2
-
-        self.score = score
+        text = text.format(score)
+        BaseSprite.__init__(self)
+        self.opaque = 0.04
+        self.speed = 0.008
 
     def update(self):
-        self.original_image = self.font.render(self.text.format(self.score), True, self.color)
-        self.rect.x = (SCR_RECT.width-self.image.get_width())/2
 
-        if self.opaque < 255:
-            if self.opaque + self.speed < 255:
+        if self.opaque < 1.0:
+            if self.opaque + self.speed < 1.0:
                 self.opaque += self.speed
             else:
-                self.opaque = 255
-
-        self.image = self.original_image.copy()
-        set_transparency_to_surf(self.image, self.opaque)
+                self.opaque = 1.0
 
 
-class PushSpaceGameover(PushSpaceStart):
+class PushSpaceGameover(BasePushSpaceSprite):
 
     y = 600
     color = (128, 128, 128)
     wait = 60
 
     def __init__(self):
-        PushSpaceStart.__init__(self)
+        BasePushSpaceSprite.__init__(self)
         self.opaque = 0
         self.speed = 3
 

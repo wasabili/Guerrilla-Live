@@ -70,11 +70,11 @@ class Guerrilla(GlossGame):
 #        BackgroundGameover.wintexture     = load_image("gameover-win.jpg")
 
         # Initialize Game object
-        self.creditdraw = CreditDraw()
+#        self.creditdraw = CreditDraw()
 #        self.startdraw = StartDraw()
         self.selectdraw = SelectDraw()
 
-        self.game_state = CREDIT #FIXME
+        self.game_state = SELECT #FIXME
         self.init_game()
 
 
@@ -125,7 +125,7 @@ class Guerrilla(GlossGame):
     def draw(self):
         """Draw game"""
 
-        gloss.Gloss.clear(gloss.Color.WHITE)
+        gloss.Gloss.clear(gloss.Color.BLACK)
 
         if self.game_state == CREDIT:
             drawer = self.creditdraw
