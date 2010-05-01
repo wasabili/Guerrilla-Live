@@ -180,6 +180,7 @@ class ContentsHelp(BaseSprite):
         if self.visible:
             BaseSprite.draw(self)
 
+
 class PushSpaceHelp(BasePushSpaceSprite):
 
     y = 690

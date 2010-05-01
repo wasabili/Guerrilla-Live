@@ -59,7 +59,7 @@ class SelectDraw():
         self.level5 = LevelSelect(5)
         self.help = HelpSelect()
 
-        self.ef_select = EffectSelect()
+        #self.ef_select = EffectSelect()
 
 
     def update(self):

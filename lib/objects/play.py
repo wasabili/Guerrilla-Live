@@ -12,7 +12,6 @@ from collections    import deque
 
 from lib.constants  import *
 from base           import *
-
 from gloss          import *
 
 #########################################################################################
@@ -264,7 +263,7 @@ class PlayDraw():
                 recycle_or_gen_object(Explosion, shots[0].rect.center) # Draw explosion
 
         """ Between player and E.Colis """
-        player_collided = spritecollide(self.player, self.enemies, True)
+        player_collided = spritecollide(self.player, self.enemies, False)
         if player_collided:
             if not self.player.killed_once(): # die once
                 self.gamedata.result = self.gamedata.LOSE
@@ -390,6 +389,7 @@ class Player(BaseSprite):
                     self.opaque = 1.0
             elif self.invincible == 0:
                 self.invincible -= 1
+                self.opaque = 1.0
 
             # Accel player
             pressed_keys = pygame.key.get_pressed()
@@ -538,7 +538,7 @@ class Bomb(BaseSprite):
 
     def __init__(self):
         self.base_img = pygame.Surface(SCR_RECT.size, SRCALPHA|HWSURFACE)
-        self.image = Texture(self.base_img)
+        self.texture = Texture(self.base_img)
         BaseSprite.__init__(self)
 
         self.start = player_pos

@@ -3,7 +3,7 @@
 
 from pygame.locals import *
 
-START, PLAY, GAMEOVER, SELECT, HELP, CREDIT = range(6)  # states of a game
+START, PLAY, GAMEOVER, SELECT, HELP, SORRY, CREDIT = range(7)  # states of a game
 WIDTH = 1024
 HEIGHT = 768
 SCR_RECT = Rect(0, 0, WIDTH, HEIGHT)

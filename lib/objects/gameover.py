@@ -6,6 +6,7 @@ from pygame.locals import *
 
 from lib.constants  import *
 from base           import *
+from gloss          import Texture
 
 #########################################################################################
 #                     GAMEOVER ANIMATION                                                #
@@ -14,7 +15,7 @@ from base           import *
 
 class GameoverDraw():
 
-    def __init__(self, gamedata):  # FIXME win or lose
+    def __init__(self, gamedata):
         # Sprite Group
         self.gameover_all = BaseGroup()
 
@@ -24,12 +25,13 @@ class GameoverDraw():
         PushSpaceGameover.containers        = self.gameover_all
 
         # Objects
-        self.bg_gameover = BackgroundGameover(gamedata.result==gamedata.WIN, gamedata.lastscreen)
-        self.pushspace = PushSpaceGameover()
-        if gamedata.result == gamedata.WIN:
-            self.score = ScoreGameover(gamedata.get_score())
-
-        self.gamedata = gamedata
+        if gamedata.win():
+            self.bg_gameover = BackgroundGameover(True)
+            self.score = ScoreGameover(gamedata.getscore())
+            self.pushspace = PushSpaceGameover()
+        else:
+            self.bg_gameover = BackgroundGameover(False)
+            self.pushspace = PushSpaceGameover()
 
     def update(self):
         self.gameover_all.update()
@@ -41,44 +43,44 @@ class GameoverDraw():
 class BackgroundGameover(BaseSprite):
     """Background fades in when a player loses"""
 
-    opaque = 255
-    speed = -10
+    opaque = 1.0
+    speed = -0.04
 
-    def __init__(self, win, lastscreen):
+    def __init__(self, win):
+        if win:
+            self.orig_texture= self.wintexture
+        else:
+            self.orig_texture = self.losetexture
+        self.texture = self.orig_texture
         BaseSprite.__init__(self)
 
-        if win:
-            self.image = self.winimage
-        else:
-            self.image = self.loseimage
+        self.rect.topleft = (0, 0)
 
-        self.original_image = self.image.copy()
-        self.rect = self.image.get_rect()
-        self.rect.x = 0
-        self.rect.y = 0
-
-        self.lastgame_image = lastscreen
+        from OpenGL.GL import *
+        OpenGL.ERROR_CHECKING = False
+        from OpenGL.GL.EXT.framebuffer_object import *
+        from OpenGL.GLU import *
+        # キャプチャ
+        glReadBuffer(GL_FRONT)
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+        data = glReadPixels(0, 0, 1024, 768, GL_RGBA, GL_UNSIGNED_BYTE)
+        # 画像を保存
+        self.game_capture = Texture(pygame.image.fromstring(data, (1024,768), "RGBA", True))
 
     def update(self):
-        if self.opaque > 0:
+        self.opaque = max(self.opaque + self.speed, 0)
 
-            self.im1 = self.original_image.copy()
-            self.im2 = self.lastgame_image.copy()
-
-            self.im1.set_alpha(255-self.opaque)
-            self.im2.set_alpha(self.opaque)
-
-            self.image = pygame.Surface(SCR_RECT.size)
-            self.image.convert_alpha()
-            self.image.blit(self.im1, (0,0))
-            self.image.blit(self.im2, (0,0))
-
-            self.opaque += self.speed
-        else:
-            self.image = self.original_image
+    def draw(self):
+        self.texture = self.game_capture
+        self.opaque = self.opaque
+        BaseSprite.draw(self)
+        self.texture = self.orig_texture
+        self.opaque = 1 - self.opaque
+        BaseSprite.draw(self)
+        self.opaque = 1 - self.opaque
 
 
-class ScoreGameover(BaseSprite):
+class ScoreGameover(BaseSpriteFont):
 
     y = 300
     text = 'SCORE: {0}'
@@ -86,8 +88,8 @@ class ScoreGameover(BaseSprite):
     fontsize = 30
 
     def __init__(self, score):
-        text = text.format(score)
-        BaseSprite.__init__(self)
+        self.text = self.text.format(score)
+        BaseSpriteFont.__init__(self)
         self.opaque = 0.04
         self.speed = 0.008
 
@@ -103,12 +105,12 @@ class ScoreGameover(BaseSprite):
 class PushSpaceGameover(BasePushSpaceSprite):
 
     y = 600
-    color = (128, 128, 128)
+    color = (0.5, 0.5, 0.5)
     wait = 60
 
     def __init__(self):
         BasePushSpaceSprite.__init__(self)
-        self.opaque = 0
-        self.speed = 3
+        self.opaque = 0.0
+        self.speed = 0.1
 
 

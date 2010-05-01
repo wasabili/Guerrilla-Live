@@ -5,4 +5,5 @@ from help import *
 from select import *
 from play import *
 from gameover import *
+from sorry import *
 

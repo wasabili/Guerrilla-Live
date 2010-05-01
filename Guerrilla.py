@@ -13,7 +13,8 @@ from lib.gamedata   import GameData
 
 from gloss          import GlossGame, Gloss, Texture
 
-#gloss.enable_multisampling = True #TODO
+#Gloss.enable_multisampling = True #TODO
+#Gloss.running_slowly=True
 os.environ['SDL_VIDEO_CENTERED'] = '1'
 os.environ['SDL_AUDIODRIVER'] = 'esd'
 
@@ -61,6 +62,10 @@ class Guerrilla(GlossGame):
         BackgroundHelp.textures           = [load_image("help-background"+str(x)+".png") for x in range(10)]
         ContentsHelp.texture              = load_image('help-contents.png')
 
+        # Sorry
+        BackgroundSorry.textures           = [load_image("sorry-background"+str(x)+".png") for x in range(10)]
+        ContentsSorry.texture               = load_image("sorry-contents.png")
+
         # Load background
         BackgroundSelect.texture          = load_image("select.jpg")
         BackgroundPlay.textures           = load_image("play.jpg", 5)
@@ -88,7 +93,7 @@ class Guerrilla(GlossGame):
     def update(self):
         """Update state of a game"""
 
-        print Gloss.elapsed_seconds #TODO
+#        print Gloss.elapsed_seconds #TODO
 
         if self.game_state == SELECT:
             self.selectdraw.update()
@@ -96,7 +101,6 @@ class Guerrilla(GlossGame):
         elif self.game_state == PLAY:
             self.playdraw.update()
             if self.playdraw.hasfinished():
-                self.gamedata.lastscreen = self._screen.copy()
                 self.gameoverdraw = GameoverDraw(self.gamedata)
                 self.game_state = GAMEOVER
 
@@ -104,9 +108,13 @@ class Guerrilla(GlossGame):
             self.gameoverdraw.update()
 
         elif self.game_state == HELP:
-            #self.selectdraw.update()  #TODO
             self.helpdraw.update()
             if self.helpdraw.hasclosed():
+                self.game_state = SELECT
+
+        elif self.game_state == SORRY:
+            self.sorrydraw.update()
+            if self.sorrydraw.hasclosed():
                 self.game_state = SELECT
 
 
@@ -127,6 +135,9 @@ class Guerrilla(GlossGame):
         elif self.game_state == HELP:
             drawer = self.helpdraw
 
+        elif self.game_state == SORRY:
+            drawer = self.sorrydraw
+
         drawer.draw()
 
 
@@ -141,7 +152,8 @@ class Guerrilla(GlossGame):
             if self.game_state == SELECT:
                 index = self.selectdraw.get_index()
                 if index == 0:
-                    print 'ARCADE MODE is selected'  #TODO
+                    self.sorrydraw = SorryDraw()
+                    self.game_state = SORRY
                 elif index in range(1, 6):
                     self.gamedata.initlevel(index)
                     self.playdraw = PlayDraw(self.gamedata)
@@ -157,6 +169,9 @@ class Guerrilla(GlossGame):
                 if not self.helpdraw.whileclosing():
                     self.helpdraw.close()
 
+            elif self.game_state == SORRY:
+                if not self.sorrydraw.whileclosing():
+                    self.sorrydraw.close()
 
 
 game = Guerrilla("Guerrilla Live(!)")
