@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
+import os
 import sys
 
 import pygame
@@ -10,7 +11,7 @@ from lib.constants  import *
 from lib.objects    import *
 from lib.gamedata   import GameData
 
-from gloss          import GlossGame, Gloss
+from gloss          import GlossGame, Gloss, Texture
 
 #gloss.enable_multisampling = True #TODO
 os.environ['SDL_VIDEO_CENTERED'] = '1'
@@ -56,27 +57,21 @@ class Guerrilla(GlossGame):
         HighlightSelect.texture             = load_image("highlight.png")
         SidebarSelect.textures              = [load_image("sidebar"+str(x)+".png") for x in range(1, 8)]
 
-#        # Help
-#        BackgroundHelp.textures           = [load_image("help-background"+str(x)+".png").convert() for x in range(10)]
-#        ContentsHelp.texture              = load_image('help-contents.png')
+        # Help
+        BackgroundHelp.textures           = [load_image("help-background"+str(x)+".png") for x in range(10)]
+        ContentsHelp.texture              = load_image('help-contents.png')
 
-#        # Load background
-#        BackgroundStart.texture           = load_image("start.jpg")
+        # Load background
         BackgroundSelect.texture          = load_image("select.jpg")
         BackgroundPlay.textures           = load_image("play.jpg", 5)
 
-#        # GameOver
-#        BackgroundGameover.losetexture    = load_image("gameover-lose.jpg")
-#        BackgroundGameover.wintexture     = load_image("gameover-win.jpg")
+        # GameOver
+        BackgroundGameover.losetexture    = load_image("gameover-lose.jpg")
+        BackgroundGameover.wintexture     = load_image("gameover-win.jpg")
 
-        # Initialize Game object
-#        self.creditdraw = CreditDraw()
-#        self.startdraw = StartDraw()
+        # init game
         self.selectdraw = SelectDraw()
-
-        self.game_state = SELECT #FIXME
         self.init_game()
-
 
         self.on_key_down = self.handle_key_presses
 
@@ -87,6 +82,7 @@ class Guerrilla(GlossGame):
         # Init data
         self.gamedata = GameData()
         self.selectdraw.init()
+        self.game_state = SELECT
 
 
     def update(self):
@@ -94,15 +90,7 @@ class Guerrilla(GlossGame):
 
         print Gloss.elapsed_seconds #TODO
 
-        if self.game_state == CREDIT:
-            self.creditdraw.update()
-            if self.creditdraw.hasfinished():
-                self.game_state = SELECT
-
-        elif self.game_state == START:
-            self.startdraw.update()
-
-        elif self.game_state == SELECT:
+        if self.game_state == SELECT:
             self.selectdraw.update()
 
         elif self.game_state == PLAY:
@@ -110,7 +98,7 @@ class Guerrilla(GlossGame):
             if self.playdraw.hasfinished():
                 self.gamedata.lastscreen = self._screen.copy()
                 self.gameoverdraw = GameoverDraw(self.gamedata)
-                self.pendingchangestate(GAMEOVER)
+                self.game_state = GAMEOVER
 
         elif self.game_state == GAMEOVER:
             self.gameoverdraw.update()
@@ -119,7 +107,7 @@ class Guerrilla(GlossGame):
             #self.selectdraw.update()  #TODO
             self.helpdraw.update()
             if self.helpdraw.hasclosed():
-                self.pendingchangestate(SELECT)
+                self.game_state = SELECT
 
 
     def draw(self):
@@ -127,13 +115,7 @@ class Guerrilla(GlossGame):
 
         gloss.Gloss.clear(gloss.Color.BLACK)
 
-        if self.game_state == CREDIT:
-            drawer = self.creditdraw
-
-        elif self.game_state == START:          # start
-            drawer = self.startdraw
-
-        elif self.game_state == SELECT:         # select
+        if self.game_state == SELECT:         # select
             drawer = self.selectdraw
 
         elif self.game_state == PLAY:           # play
@@ -156,10 +138,7 @@ class Guerrilla(GlossGame):
 
         elif event.key in (K_SPACE, K_RETURN):
 
-            if self.game_state == START:
-                self.pendingchangestate(SELECT)
-
-            elif self.game_state == SELECT:
+            if self.game_state == SELECT:
                 index = self.selectdraw.get_index()
                 if index == 0:
                     print 'ARCADE MODE is selected'  #TODO
@@ -173,7 +152,6 @@ class Guerrilla(GlossGame):
 
             elif self.game_state == GAMEOVER:
                 self.init_game()
-                self.pendingchangestate(SELECT)
 
             elif self.game_state == HELP:
                 if not self.helpdraw.whileclosing():

@@ -5,12 +5,10 @@ import pygame
 from pygame.locals import *
 import sys
 
-from lib.sprite     import *
 from lib.constants  import *
-from lib.utils      import set_transparency_to_surf
-from base           import *
-from start          import PushSpaceStart
-            
+from base           import BaseSprite, BaseGroup, BasePushSpaceSprite
+from gloss          import Gloss, Texture, Color
+
 #########################################################################################
 #                     HELP ANIMATION                                                    #
 #########################################################################################
@@ -20,7 +18,7 @@ class HelpDraw():
 
     def __init__(self):
         # Sprite Group
-        self.help_all = LayeredDirty()
+        self.help_all = BaseGroup()
 
         # Register groups to sprites
         BackgroundHelp.containers   = self.help_all
@@ -34,8 +32,6 @@ class HelpDraw():
         self.contents_help = ContentsHelp(self.cover_help)
         self.pushspace_help = PushSpaceHelp(self.cover_help)
 
-        self.base_surf = pygame.Surface(SCR_RECT.size, HWSURFACE)
-
         self.closing = False
         self.closed = False
 
@@ -43,8 +39,8 @@ class HelpDraw():
         self.help_all.update()
         self.closed = self.cover_help.hasclosed()
 
-    def draw(self, screen):
-        return self.help_all.draw(screen)
+    def draw(self):
+        self.help_all.draw()
 
     def close(self):
         self.closing = True
@@ -60,15 +56,12 @@ class HelpDraw():
         return self.closed
 
 
-class BackgroundHelp(DirtySprite):
+class BackgroundHelp(BaseSprite):
 
     def __init__(self):
-        DirtySprite.__init__(self, self.containers)
-        self.dirty = 2
-
         self.index = 0
-        self.image = self.images[self.index]
-        self.rect = SCR_RECT
+        self.texture = self.textures[self.index]
+        BaseSprite.__init__(self)
 
         self.frame = 0
         self.cycle = 3
@@ -78,42 +71,40 @@ class BackgroundHelp(DirtySprite):
     def update(self):
 
         if self.goforward:
-            if self.frame%self.cycle == 0 and self.index < len(self.images)-1:
+            if self.frame%self.cycle == 0 and self.index < len(self.textures)-1:
                 self.index += 1
-                self.image = self.images[self.index]
+                self.texture = self.textures[self.index]
 
             self.frame += 1
 
         else:
             if self.frame%self.cycle == 0 and self.index > 0:
                 self.index -= 1
-                self.image = self.images[self.index]
+                self.texture = self.textures[self.index]
 
             self.frame -= 1
-            
 
     def close(self):
         self.goforward = False
-        self.frame = len(self.images)
+        self.frame = len(self.textures)
         self.cycle = 1
-        
 
-class CoverHelp(DirtySprite):
+
+class CoverHelp(BaseSprite):
 
     ENTER, SHOW, EXIT = range(3)
-    FIRST, SECOND, WAIT = range(3)
+    FIRST, SECOND, WAIT = range(3) # of ENTER state
 
     def __init__(self):
-        DirtySprite.__init__(self, self.containers)
-        self.dirty = 2
+        self.texture = Texture(pygame.Surface(SCR_RECT.size, SRCALPHA|HWSURFACE))
+        BaseSprite.__init__(self)
 
-        self.rect = None
         self.frame = 0
         self.state = self.ENTER
         self.step = self.FIRST
         self.speed = 30
-        self.opaque = 128
-        self.opaque_speed = 10
+        self.opaque = 0.5
+        self.opaque_speed = 0.04
         self.wait = 10
         self.fpx = SCR_RECT.width/2.0-3
         self.fpy = SCR_RECT.height/2.0-3
@@ -150,15 +141,13 @@ class CoverHelp(DirtySprite):
             self.fpy = 0
             self.opaque = max(self.opaque - self.opaque_speed, 0)
 
-
-        width = int(SCR_RECT.width-self.fpx*2)
-        height = int(SCR_RECT.height-self.fpy*2)
-        newsurf = pygame.Surface((width, height), SRCALPHA|HWSURFACE)
-        newsurf.fill((0,0,0,self.opaque))
-
-        self.image = newsurf
-        self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = int(self.fpx), int(self.fpy)
+    def draw(self):
+        if self.frame:
+            position = (int(self.fpx), int(self.fpy))
+            width = int(SCR_RECT.width-self.fpx*2)
+            height = int(SCR_RECT.height-self.fpy*2)
+            color = Color(0, 0, 0, self.opaque)
+            Gloss.draw_box(position = position, width = width, height = height, rotation = 0.0, origin = (0, 0), scale = 1, color = color)
 
     def isshowstate(self):
         return self.state == self.SHOW
@@ -170,36 +159,33 @@ class CoverHelp(DirtySprite):
         return self.state == self.EXIT and self.opaque == 0
 
 
-class ContentsHelp(DirtySprite):
+class ContentsHelp(BaseSprite):
     
     pos = (74, 74)
 
     def __init__(self, cover_help):
-        DirtySprite.__init__(self, self.containers)
-        self.dirty = 2
+        BaseSprite.__init__(self, self.containers)
 
-        self.none_image = pygame.Surface((0,0))
-        self.rect = self.image.get_rect()
         self.rect.topleft = self.pos
+        self.visible = False
         self.cover_help = cover_help
-
-        self.original_image = self.image.copy()
 
     def update(self):
         if self.cover_help.isshowstate():
-            self.image = self.original_image
+            self.visible = True
         else:
-            self.image = self.none_image
-            self.rect = self.image.get_rect()
-            self.rect.topleft = self.pos
+            self.visible = False
 
+    def draw(self):
+        if self.visible:
+            BaseSprite.draw(self)
 
-class PushSpaceHelp(PushSpaceStart):
+class PushSpaceHelp(BasePushSpaceSprite):
 
     y = 690
 
     def __init__(self, cover_help):
-        PushSpaceStart.__init__(self)
+        BasePushSpaceSprite.__init__(self)
 
         self.wait = sys.maxint
         self.cover_help = cover_help
@@ -207,5 +193,5 @@ class PushSpaceHelp(PushSpaceStart):
     def update(self):
         if self.cover_help.isshowstate():
             self.wait = -1
-        PushSpaceStart.update(self)
+        BasePushSpaceSprite.update(self)
 

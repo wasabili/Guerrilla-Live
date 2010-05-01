@@ -11,6 +11,11 @@ from gloss          import Color
 
 class BaseSprite(gloss.Sprite, pygame.sprite.Sprite):
 
+    #TODO
+    # visible = True
+    # dummy_texture
+    # BaseAnimatedSprite
+
     opaque = 1.0
     rotation = 0.0
     scale = 1.0
@@ -53,9 +58,9 @@ class BaseSpriteFont(gloss.SpriteFont, pygame.sprite.Sprite):
         gloss.SpriteFont.__init__(self, filename=os.path.join('data', filename), size = self.fontsize, bold = False, underline = False, startcharacter = 32, endcharacter = 126)
 
         if self.x is None:
-            self.x = (SCR_RECT.width - self.measure_string()[0])/2
+            self.x = (SCR_RECT.width - self.measure_string(self.text)[0])/2
         if self.y is None:
-            self.y = (SCR_RECT.height - self.measure_string()[1])/2
+            self.y = (SCR_RECT.height - self.measure_string(self.text)[1])/2
 
     def draw(self, text = "Hello, Gloss!", position = (0, 0), rotation = 0.0, scale = 1.0, color = Color.WHITE, letterspacing = 0, linespacing = 0):
         gloss.SpriteFont.draw(self, text=self.text, position = (self.x, self.y), rotation = self.rotation, scale = self.scale, color = Color(self.color[0], self.color[1], self.color[2], self.opaque))
